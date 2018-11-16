@@ -10,7 +10,7 @@ const existsSync = require(`fs-exists-cached`).sync
 
 const spawn = (cmd: string) => {
   const [file, ...args] = cmd.split(/\s+/)
-  return execa(file, args, { stdio: `inherit` })
+  return execa(file, args.filter(Boolean), { stdio: `inherit` })
 }
 
 // Checks the existence of yarn package
@@ -28,14 +28,27 @@ const shouldUseYarn = () => {
 }
 
 // Executes `npm install` or `yarn install` in rootPath.
-const install = async rootPath => {
+const install = async (rootPath: string, options: InitOptions) => {
   const prevDir = process.cwd()
 
   report.info(`Installing packages...`)
   process.chdir(rootPath)
 
   try {
-    let cmd = shouldUseYarn() ? spawn(`yarnpkg`) : spawn(`npm install`)
+    let cmd
+    if (shouldUseYarn()) {
+      const yarnArgs = []
+      if (options.usePnp) {
+        // check if pnp is supported (because of the time I couldn't wrap it up)
+        // https://github.com/facebook/create-react-app/commit/d6682c81904065676b565849a83e55f0823ecfad#diff-f9867c1e09ced1328f2ccdac4afac4a5R258
+        yarnArgs.push(`--enable-pnp`)
+      }
+
+      cmd = spawn(`yarnpkg ${yarnArgs.join(` `)}`)
+    } else {
+      cmd = spawn(`npm install`)
+    }
+
     await cmd
   } finally {
     process.chdir(prevDir)
@@ -45,7 +58,11 @@ const install = async rootPath => {
 const ignored = path => !/^\.(git|hg)$/.test(sysPath.basename(path))
 
 // Copy starter from file system.
-const copy = async (starterPath: string, rootPath: string) => {
+const copy = async (
+  starterPath: string,
+  rootPath: string,
+  options: InitOptions
+) => {
   // Chmod with 755.
   // 493 = parseInt('755', 8)
   await fs.mkdirp(rootPath, { mode: 493 })
@@ -71,13 +88,13 @@ const copy = async (starterPath: string, rootPath: string) => {
 
   report.success(`Created starter directory layout`)
 
-  await install(rootPath)
+  await install(rootPath, options)
 
   return true
 }
 
 // Clones starter from URI.
-const clone = async (hostInfo: any, rootPath: string) => {
+const clone = async (hostInfo: any, rootPath: string, options: InitOptions) => {
   let url
   // Let people use private repos accessed over SSH.
   if (hostInfo.getDefaultRepresentation() === `sshurl`) {
@@ -97,11 +114,12 @@ const clone = async (hostInfo: any, rootPath: string) => {
 
   await fs.remove(sysPath.join(rootPath, `.git`))
 
-  await install(rootPath)
+  await install(rootPath, options)
 }
 
 type InitOptions = {
   rootPath?: string,
+  usePnp: boolean,
 }
 
 /**
@@ -124,6 +142,6 @@ module.exports = async (starter: string, options: InitOptions = {}) => {
   }
 
   const hostedInfo = hostedGitInfo.fromUrl(starter)
-  if (hostedInfo) await clone(hostedInfo, rootPath)
-  else await copy(starter, rootPath)
+  if (hostedInfo) await clone(hostedInfo, rootPath, options)
+  else await copy(starter, rootPath, options)
 }

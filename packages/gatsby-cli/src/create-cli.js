@@ -296,12 +296,16 @@ module.exports = (argv, handlers) => {
 
   return cli
     .command({
-      command: `new [rootPath] [starter]`,
+      command: `new [rootPath] [starter] [options]`,
       desc: `Create new Gatsby project.`,
+      builder: yargs =>
+        yargs.option(`use-pnp`, {
+          type: `boolean`,
+        }),
       handler: handlerP(
-        ({ rootPath, starter = `gatsbyjs/gatsby-starter-default` }) => {
+        ({ rootPath, starter = `gatsbyjs/gatsby-starter-default`, usePnp }) => {
           const initStarter = require(`./init-starter`)
-          return initStarter(starter, { rootPath })
+          return initStarter(starter, { rootPath, usePnp })
         }
       ),
     })

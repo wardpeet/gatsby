@@ -1,0 +1,22 @@
+jest.mock(`fs-exists-cached`);
+jest.mock(`execa`);
+const existsSync = require(`fs-exists-cached`).sync
+const execa = require(`execa`);
+
+const Starter = require(`../init-starter`)
+
+describe(`Starter`, () => {
+  it(`installs as normal without any flags`, async () => {
+    execa.mockReturnValue(Promise.resolve())
+    await Starter(`gatsbyjs/gatsby-starter-default`, { rootPath: __dirname })
+
+    expect(execa).toHaveBeenCalledWith('yarnpkg', [], { stdio: `inherit` })
+  });
+
+  it(`install uses pnp when --use-pnp is true`, async () => {
+    execa.mockReturnValue(Promise.resolve())
+    await Starter(`gatsbyjs/gatsby-starter-default`, { usePnp: true, rootPath: __dirname })
+
+    expect(execa).toHaveBeenCalledWith('yarnpkg', ['--enable-pnp'], { stdio: `inherit` })
+  });
+});
