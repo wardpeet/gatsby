@@ -42,4 +42,5 @@ module.exports = {
     },
   },
   collectCoverageFrom: coverageDirs,
+  resolver: require.resolve(`jest-pnp-resolver`),
 }

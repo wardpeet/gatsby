@@ -9,4 +9,5 @@ module.exports = {
     `__tests__/fixtures`,
   ],
   transform: { "^.+\\.js$": `<rootDir>/jest-transformer.js` },
+  resolver: require.resolve(`jest-pnp-resolver`),
 }
