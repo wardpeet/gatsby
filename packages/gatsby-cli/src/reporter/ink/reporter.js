@@ -1,21 +1,22 @@
 import React from "react"
 import { Static, Box } from "ink"
-import { globalTracer } from "opentracing"
 import { isCI } from "ci-info"
-import chalk from "chalk"
-import Activity, { calcElapsedTime } from "./components/activity"
+import { createProgressBar, createSpinner } from "./activities"
+import Activity from "./components/activity"
+import ProgressBar from "./components/progressbar"
 import { Message } from "./components/messages"
 
-const tracer = globalTracer()
 const showProgress = process.stdout.isTTY && !isCI
 
-const generateActivityFinishedText = (name, activity) => {
-  let successText = `${name} - ${calcElapsedTime(activity.startTime)} s`
-  if (activity.status) {
-    successText += ` — ${activity.status}`
-  }
+const getActivitiesByType = (activities, type) => {
+  const filteredActivities = {}
+  Object.keys(activities).forEach(key => {
+    if (activities[key].type === type) {
+      filteredActivities[key] = activities[key]
+    }
+  })
 
-  return successText
+  return filteredActivities
 }
 
 export default class GatsbyReporter extends React.Component {
@@ -26,58 +27,13 @@ export default class GatsbyReporter extends React.Component {
     activities: {},
   }
 
-  format = chalk
-
-  createActivity = (name, activityArgs) => {
-    const { parentSpan } = activityArgs
-    const spanArgs = parentSpan ? { childOf: parentSpan } : {}
-    const span = tracer.startSpan(name, spanArgs)
-
-    return {
-      start: () => {
-        this.setState(state => {
-          return {
-            activities: {
-              ...state.activities,
-              [name]: {
-                status: ``,
-                startTime: process.hrtime(),
-              },
-            },
-          }
-        })
-      },
-      setStatus: status => {
-        this.setState(state => {
-          const activity = state.activities[name]
-
-          return {
-            activities: {
-              ...state.activities,
-              [name]: {
-                ...activity,
-                status: status,
-              },
-            },
-          }
-        })
-      },
-      end: () => {
-        span.finish()
-        const activity = this.state.activities[name]
-
-        this.onSuccess(generateActivityFinishedText(name, activity))
-
-        this.setState(state => {
-          const activities = { ...state.activities }
-          delete activities[name]
-
-          return {
-            activities,
-          }
-        })
-      },
-      span,
+  createActivity = (name, { type, ...options }) => {
+    switch (type) {
+      case `progress`:
+        return createProgressBar(this)(name, options)
+      case `spinner`:
+      default:
+        return createSpinner(this)(name, options)
     }
   }
 
@@ -124,28 +80,46 @@ export default class GatsbyReporter extends React.Component {
   }
 
   render() {
+    const { disableColors, activities, messages } = this.state
+
     return (
       <Box flexDirection="column">
         <Box flexDirection="column">
           <Static>
-            {this.state.messages.map((msg, index) => (
+            {messages.map((msg, index) => (
               <Box textWrap="wrap" key={index}>
-                <Message type={msg.type} hideColors={this.state.disableColors}>
+                <Message type={msg.type} hideColors={disableColors}>
                   {msg.text}
                 </Message>
               </Box>
             ))}
           </Static>
 
+          <Box flexDirection="column">
+            {showProgress &&
+              Object.keys(getActivitiesByType(activities, `spinner`)).map(
+                activityName => (
+                  <Activity
+                    key={activityName}
+                    name={activityName}
+                    {...this.state.activities[activityName]}
+                  />
+                )
+              )}
+          </Box>
+
           <Box flexDirection="column" marginTop={1}>
             {showProgress &&
-              Object.keys(this.state.activities).map(activityName => (
-                <Activity
-                  key={activityName}
-                  name={activityName}
-                  {...this.state.activities[activityName]}
-                />
-              ))}
+              Object.keys(getActivitiesByType(activities, `process`)).map(
+                progressMsg => (
+                  <ProgressBar
+                    key={progressMsg}
+                    message={progressMsg}
+                    total={this.state.progressbars[progressMsg].total}
+                    current={this.state.progressbars[progressMsg].current}
+                  />
+                )
+              )}
           </Box>
         </Box>
       </Box>

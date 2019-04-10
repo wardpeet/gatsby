@@ -6,7 +6,9 @@ const chalk = require(`chalk`)
 const { trackError } = require(`gatsby-telemetry`)
 const { getErrorFormatter } = require(`./errors`)
 const inkReporter = require(`./ink`).default
+const { globalTracer } = require(`opentracing`)
 
+const tracer = globalTracer()
 const errorFormatter = getErrorFormatter()
 
 type ActivityArgs = {
@@ -61,8 +63,11 @@ const reporter = {
       error = message
       message = error.message
     }
+
     inkReporter.onError(message)
-    if (error) this.log(errorFormatter.render(error))
+    if (error) {
+      this.log(errorFormatter.render(error))
+    }
   },
   /**
    * Set prefix on uptime.
@@ -76,6 +81,7 @@ const reporter = {
   info: (...args) => inkReporter.onInfo(...args),
   warn: (...args) => inkReporter.onWarn(...args),
   log: (...args) => inkReporter.onLog(...args),
+
   /**
    * Time an activity.
    * @param {string} name - Name of activity.
@@ -83,7 +89,32 @@ const reporter = {
    * @returns {string} The elapsed time of activity.
    */
   activityTimer(name, activityArgs: ActivityArgs = {}) {
-    return inkReporter.createActivity(name, activityArgs)
+    const { parentSpan } = activityArgs
+    const spanArgs = parentSpan ? { childOf: parentSpan } : {}
+    const span = tracer.startSpan(name, spanArgs)
+
+    const activity = inkReporter.createActivity(name, {
+      type: `spinner`,
+    })
+
+    return {
+      ...activity,
+      end: () => {
+        span.finish()
+        activity.end()
+      },
+      span,
+    }
+  },
+
+  createProgressBar: (name, total = 0, start = 0) => {
+    const activity = inkReporter.createActivity(name, {
+      type: `progress`,
+      total,
+      start,
+    })
+
+    return activity
   },
 }
 
