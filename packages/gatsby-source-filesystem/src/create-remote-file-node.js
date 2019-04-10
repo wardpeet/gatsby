@@ -6,19 +6,13 @@ const { isWebUri } = require(`valid-url`)
 const Queue = require(`better-queue`)
 const readChunk = require(`read-chunk`)
 const fileType = require(`file-type`)
-const ProgressBar = require(`progress`)
+const { createProgressBar } = require(`gatsby-cli/lib/reporter`)
 
 const { createFileNode } = require(`./create-file-node`)
 const { getRemoteFileExtension, getRemoteFileName } = require(`./utils`)
 const cacheId = url => `create-remote-file-node-${url}`
 
-const bar = new ProgressBar(
-  `Downloading remote files [:bar] :current/:total :elapsed secs :percent`,
-  {
-    total: 0,
-    width: 30,
-  }
-)
+const bar = createProgressBar(`Downloading remote files`)
 
 /********************
  * Type Definitions *
@@ -346,6 +340,10 @@ module.exports = ({
     // should we resolve here, or reject?
     // Technically, it's invalid input
     return Promise.resolve()
+  }
+
+  if (totalJobs === 0) {
+    bar.start()
   }
 
   totalJobs += 1
