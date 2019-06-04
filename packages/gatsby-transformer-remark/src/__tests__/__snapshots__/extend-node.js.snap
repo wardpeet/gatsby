@@ -369,6 +369,68 @@ Object {
 }
 `;
 
+exports[`Excerpt is generated correctly from schema test 1`] = `
+Object {
+  "excerpt": "<p>Paragraph one sentence one. Sentence two.</p>
+<p>Paragraph two sentence one.</p>
+<p>Paragraph three sentence one.</p>",
+  "excerptAst": Object {
+    "children": Array [
+      Object {
+        "children": Array [
+          Object {
+            "type": "text",
+            "value": "Paragraph one sentence one. Sentence two.",
+          },
+        ],
+        "properties": Object {},
+        "tagName": "p",
+        "type": "element",
+      },
+      Object {
+        "type": "text",
+        "value": "
+",
+      },
+      Object {
+        "children": Array [
+          Object {
+            "type": "text",
+            "value": "Paragraph two sentence one.",
+          },
+        ],
+        "properties": Object {},
+        "tagName": "p",
+        "type": "element",
+      },
+      Object {
+        "type": "text",
+        "value": "
+",
+      },
+      Object {
+        "children": Array [
+          Object {
+            "type": "text",
+            "value": "Paragraph three sentence one.",
+          },
+        ],
+        "properties": Object {},
+        "tagName": "p",
+        "type": "element",
+      },
+    ],
+    "data": Object {
+      "quirksMode": false,
+    },
+    "type": "root",
+  },
+  "frontmatter": Object {
+    "title": "my little pony",
+  },
+}
+`;
+
 exports[`Headings are generated correctly from schema returns value 1`] = `
 Object {
   "headings": Array [

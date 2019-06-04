@@ -457,6 +457,32 @@ Where is my <code>pony</code> named leo?`,
   )
 
   bootstrapTest(
+    `test`,
+    `---
+title: "my little pony"
+date: "2017-09-18T23:19:51.246Z"
+---
+
+Paragraph one sentence one. Sentence two.
+
+Paragraph two sentence one.
+
+Paragraph three sentence one.
+`,
+    `excerpt(format: HTML)
+      excerptAst
+      frontmatter {
+          title
+      }
+      `,
+    node => {
+      expect(node).toMatchSnapshot()
+      expect(node.excerptAst).toMatchObject({})
+    },
+    { pluginOptions: { excerpt_separator: `<!-- end -->` } }
+  )
+
+  bootstrapTest(
     `given an html format, it prunes large excerpts`,
     `---
 title: "my little pony"

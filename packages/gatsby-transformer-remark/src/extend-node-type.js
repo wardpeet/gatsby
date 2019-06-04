@@ -438,6 +438,9 @@ module.exports = (
           if (node.type === `image`) {
             excerptNodes.push(node.alt)
           }
+          if (excerptNodes.length && node.type === `paragraph`) {
+            excerptNodes.push(` `)
+          }
           return
         })
 
