@@ -2,6 +2,14 @@ const Joi = require(`joi`)
 
 const stripTrailingSlash = chain => chain.replace(/(\w)\/+$/, `$1`)
 
+const withEnvironmentVariable = (envVar, condition, chain = Joi.boolean()) => {
+  const fallback = process.env[envVar]
+
+  return Joi.boolean().default(
+    typeof condition === `function` ? condition(fallback) : fallback
+  )
+}
+
 export const gatsbyConfigSchema = Joi.object()
   .keys({
     __experimentalThemes: Joi.array(),
@@ -27,6 +35,14 @@ export const gatsbyConfigSchema = Joi.object()
       url: Joi.string().required(),
     }),
     developMiddleware: Joi.func(),
+    experiments: Joi.object()
+      .keys({
+        useLokiDB: withEnvironmentVariable(
+          `GATSBY_DB_NODES`,
+          value => value === `loki`
+        ),
+      })
+      .default(),
   })
   // throws when both assetPrefix and pathPrefix are defined
   .when(

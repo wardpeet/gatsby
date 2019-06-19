@@ -22,6 +22,8 @@ const tracer = require(`opentracing`).globalTracer()
 const preferDefault = require(`./prefer-default`)
 const nodeTracking = require(`../db/node-tracking`)
 const withResolverContext = require(`../schema/context`)
+const { inExperiment, initExperiments } = require(`../utils/experiments`)
+
 // Add `util.promisify` polyfill for old node versions
 require(`util.promisify/shim`)()
 
@@ -97,6 +99,8 @@ module.exports = async (args: BootstrapArgs) => {
     type: `SET_SITE_CONFIG`,
     payload: config,
   })
+
+  initExperiments(store.getState().config.experiments)
 
   activity.end()
 
@@ -206,7 +210,7 @@ module.exports = async (args: BootstrapArgs) => {
 
   activity.end()
 
-  if (process.env.GATSBY_DB_NODES === `loki`) {
+  if (inExperiment(`useLokiDB`)) {
     const loki = require(`../db/loki`)
     // Start the nodes database (in memory loki js with interval disk
     // saves). If data was saved from a previous build, it will be
