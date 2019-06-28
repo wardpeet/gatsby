@@ -295,7 +295,7 @@ module.exports = async ({
   {
     let js = ({ exclude = [], ...options } = {}) => {
       const excludeRegex = [
-        `core-js|event-source-polyfill|webpack-hot-middleware/client`,
+        `core-js|event-source-polyfill|webpack-hot-middleware/client|source-map`,
       ].concat(exclude)
 
       return {

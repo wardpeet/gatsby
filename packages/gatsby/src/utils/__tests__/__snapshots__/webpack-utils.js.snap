@@ -2,7 +2,7 @@
 
 exports[`webpack utils js returns default values without any options 1`] = `
 Object {
-  "exclude": /core-js\\|event-source-polyfill\\|webpack-hot-middleware\\\\/client/,
+  "exclude": /core-js\\|event-source-polyfill\\|webpack-hot-middleware\\\\/client\\|source-map/,
   "test": /\\\\\\.\\(js\\|mjs\\|jsx\\)\\$/,
   "type": "javascript/auto",
   "use": Array [
@@ -16,7 +16,7 @@ Object {
 
 exports[`webpack utils js returns the correct exclude paths 1`] = `
 Object {
-  "exclude": /core-js\\|event-source-polyfill\\|webpack-hot-middleware\\\\/client\\|node_modules/,
+  "exclude": /core-js\\|event-source-polyfill\\|webpack-hot-middleware\\\\/client\\|source-map\\|node_modules/,
   "test": /\\\\\\.\\(js\\|mjs\\|jsx\\)\\$/,
   "type": "javascript/auto",
   "use": Array [
