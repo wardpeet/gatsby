@@ -17,6 +17,7 @@ export interface StaticQueryProps {
   query: any
   render?: RenderCallback
   children?: RenderCallback
+  something?: any
 }
 
 export const useStaticQuery: <TData = any>(query: any) => TData
