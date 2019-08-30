@@ -10,7 +10,10 @@
       "message": "chore(release): Publish"
     }
   },
-  "packages": ["packages/*", "/gatsby-theme-*"],
+  "packages": [
+    "packages/*",
+    "/gatsby-theme-*"
+  ],
   "loglevel": "success",
   "version": "independent",
   "npmClient": "yarn",
@@ -18,6 +21,7 @@
   "useWorkspaces": true,
   "ignoreChanges": [
     "CHANGELOG.md",
+    "README.md",
     "**/__tests__/**",
     "**/__mocks__/**",
     "**/__testfixtures__/**"
