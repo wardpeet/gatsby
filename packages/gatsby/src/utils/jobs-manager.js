@@ -11,8 +11,18 @@ const reporter = require(`gatsby-cli/lib/reporter`)
 let activityForJobs = null
 let activeJobs = 0
 
+const MESSAGE_TYPES = {
+  JOB_CREATED: `JOB_CREATED`,
+  JOB_COMPLETED: `JOB_COMPLETED`,
+  JOB_FAILED: `JOB_FAILED`,
+  JOB_NOT_WHITELISTED: `JOB_NOT_WHITELISTED`,
+}
+
 /** @type {Map<string, {id: string, deferred: pDefer.DeferredPromise<any>}>} */
 const jobsInProcess = new Map()
+
+let isListeningForMessages = false
+const externalJobsMap = new Map()
 
 /**
  * We want to use absolute paths to make sure they are on the filesystem
@@ -88,6 +98,56 @@ const runLocalWorker = async (workerFn, job) => {
   })
 }
 
+const listenForJobMessages = () => {
+  process.on(`message`, async msg => {
+    if (
+      msg &&
+      msg.type &&
+      msg.payload &&
+      msg.payload.id &&
+      externalJobsMap.has(msg.payload.id)
+    ) {
+      const { job, deferred } = externalJobsMap.get(msg.payload.id)
+      switch (msg.type) {
+        case MESSAGE_TYPES.JOB_COMPLETED: {
+          deferred.resolve(msg.payload.result)
+          break
+        }
+        case MESSAGE_TYPES.JOB_FAILED: {
+          deferred.reject(msg.payload.error)
+          break
+        }
+        case MESSAGE_TYPES.JOB_NOT_WHITELISTED: {
+          deferred.resolve(await runJob(job, true))
+          break
+        }
+      }
+
+      if (externalJobsMap.has(msg.payload.id)) {
+        externalJobsMap.delete(msg.payload.id)
+      }
+    }
+  })
+}
+
+/**
+ * @param {AugmentedJob} job
+ */
+const runExternalWorker = job => {
+  const deferred = pDefer()
+  externalJobsMap.set(job.id, {
+    job,
+    deferred,
+  })
+
+  process.send({
+    type: MESSAGE_TYPES.JOB_CREATED,
+    payload: job,
+  })
+
+  return deferred.promise
+}
+
 /**
  * Make sure we have everything we need to run a job
  * If we do, run it locally.
@@ -96,12 +156,27 @@ const runLocalWorker = async (workerFn, job) => {
  * @param {InternalJob} job
  * @return {Promise<object>}
  */
-const runJob = job => {
+const runJob = (job, forceLocal = false) => {
   const { plugin } = job
   try {
     const worker = require(path.posix.join(plugin.resolve, `gatsby-worker.js`))
     if (!worker[job.name]) {
       throw new Error(`No worker function found for ${job.name}`)
+    }
+
+    if (!forceLocal && process.env.GATSBY_CLOUD_JOBS) {
+      if (process.send) {
+        if (!isListeningForMessages) {
+          isListeningForMessages = true
+          listenForJobMessages()
+        }
+
+        return runExternalWorker(job)
+      } else {
+        reporter.warn(
+          `Offloading of jobs failed as IPC could not be detected. Running job locally.`
+        )
+      }
     }
 
     return runLocalWorker(worker[job.name], job)
