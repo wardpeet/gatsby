@@ -442,5 +442,17 @@ describe(`Jobs manager`, () => {
       await expect(promise).resolves.toStrictEqual({ output: `myresult` })
       expect(worker.TEST_JOB).toHaveBeenCalledTimes(1)
     })
+
+    it(`shouldn't schedule a remote job when ipc is enabled and env variable is false`, async () => {
+      process.env.GATSBY_CLOUD_JOBS = `false`
+      jest.useRealTimers()
+      const { enqueueJob } = jobManager
+      const jobArgs = createInternalMockJob()
+
+      await enqueueJob(jobArgs)
+
+      expect(process.send).not.toHaveBeenCalled()
+      expect(worker.TEST_JOB).toHaveBeenCalled()
+    })
   })
 })

@@ -68,6 +68,10 @@ const createFileHash = path => hasha.fromFileSync(path, { algorithm: `sha1` })
 /** @type {pDefer.DeferredPromise<void>|null} */
 let hasActiveJobs = null
 
+const hasCloudJobsEnabled = () =>
+  process.env.GATSBY_CLOUD_JOBS === `true` ||
+  process.env.GATSBY_CLOUD_JOBS === `1`
+
 /**
  * Get the local worker function and execute it on the user's machine
  *
@@ -164,7 +168,7 @@ const runJob = (job, forceLocal = false) => {
       throw new Error(`No worker function found for ${job.name}`)
     }
 
-    if (!forceLocal && process.env.GATSBY_CLOUD_JOBS) {
+    if (!forceLocal && hasCloudJobsEnabled()) {
       if (process.send) {
         if (!isListeningForMessages) {
           isListeningForMessages = true
@@ -178,7 +182,6 @@ const runJob = (job, forceLocal = false) => {
         )
       }
     }
-
     return runLocalWorker(worker[job.name], job)
   } catch (err) {
     throw new Error(
