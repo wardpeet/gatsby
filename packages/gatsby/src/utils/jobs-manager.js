@@ -135,7 +135,7 @@ const listenForJobMessages = () => {
 }
 
 /**
- * @param {AugmentedJob} job
+ * @param {InternalJob} job
  */
 const runExternalWorker = job => {
   const deferred = pDefer()
