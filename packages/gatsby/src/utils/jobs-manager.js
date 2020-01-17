@@ -118,7 +118,7 @@ const listenForJobMessages = () => {
           break
         }
         case MESSAGE_TYPES.JOB_FAILED: {
-          deferred.reject(msg.payload.error)
+          deferred.reject(new WorkerError(msg.payload.error))
           break
         }
         case MESSAGE_TYPES.JOB_NOT_WHITELISTED: {
