@@ -96,7 +96,7 @@ const runLocalWorker = async (workerFn, job) => {
           })
         )
       } catch (err) {
-        reject(err)
+        reject(new WorkerError(err))
       }
     })
   })

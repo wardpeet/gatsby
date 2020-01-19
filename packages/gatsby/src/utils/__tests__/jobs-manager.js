@@ -216,7 +216,9 @@ describe(`Jobs manager`, () => {
       try {
         await enqueueJob(jobArgs)
       } catch (err) {
-        expect(err).toMatchInlineSnapshot(`[WorkerError: An error occured]`)
+        expect(err).toMatchInlineSnapshot(
+          `[WorkerError: Error: An error occured]`
+        )
       }
       try {
         await enqueueJob(jobArgs2)
@@ -417,7 +419,9 @@ describe(`Jobs manager`, () => {
 
       jest.runAllTimers()
 
-      await expect(promise).rejects.toBe(`JOB failed...`)
+      await expect(promise).rejects.toStrictEqual(
+        new jobManager.WorkerError(`JOB failed...`)
+      )
       expect(worker.TEST_JOB).not.toHaveBeenCalled()
     })
 
