@@ -1,5 +1,8 @@
 {
-  "extends": ["config:base", ":disablePeerDependencies"],
+  "extends": [
+    "config:base",
+    ":disablePeerDependencies"
+  ],
   "includePaths": [
     "package.json",
     "starters/**",
@@ -18,15 +21,31 @@
   "packageRules": [
     {
       "groupName": "minor updates in packages",
-      "updateTypes": ["minor"]
+      "updateTypes": [
+        "minor"
+      ]
     },
     {
       "groupName": "patch updates in packages",
-      "updateTypes": ["patch"]
+      "updateTypes": [
+        "patch"
+      ]
     },
     {
-      "depTypeList": ["engines"],
+      "depTypeList": [
+        "engines"
+      ],
       "enabled": false
+    },
+    {
+      "groupName": "Upgrade packages for www",
+      "paths": [
+        "www/"
+      ],
+      "packageNames": [
+        "theme-ui"
+      ],
+      "allowedVersions": "<0.3.0"
     }
   ],
   "timezone": "GMT",
