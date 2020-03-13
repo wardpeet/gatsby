@@ -22,7 +22,12 @@ module.exports = async function onCreateNode(
     return {}
   }
 
-  const content = await loadNodeContent(node)
+  let content
+  if (typeof node.internal.content === `string`) {
+    content = node.internal.content
+  } else {
+    content = await loadNodeContent(node)
+  }
 
   try {
     const data = grayMatter(content, pluginOptions)
