@@ -1,6 +1,3 @@
-// disable output coloring for tests
-process.env.FORCE_COLOR = 0
-
 const mockClient = {
   getLocales: jest.fn(() =>
     Promise.resolve({
@@ -49,9 +46,6 @@ jest.mock(`../plugin-options`, () => {
   }
 })
 
-// jest so test output is not filled with contentful plugin logs
-global.console = { log: jest.fn(), time: jest.fn(), timeEnd: jest.fn() }
-
 const contentful = require(`contentful`)
 const fetchData = require(`../fetch`)
 const {
@@ -86,6 +80,7 @@ beforeAll(() => {
 const reporter = {
   info: jest.fn(),
   panic: jest.fn(),
+  info: jest.fn(),
 }
 
 beforeEach(() => {
