@@ -1,5 +1,4 @@
 const contentful = require(`contentful`)
-const _ = require(`lodash`)
 const chalk = require(`chalk`)
 const { formatPluginOptionsForCLI } = require(`./plugin-options`)
 const normalize = require(`./normalize`)

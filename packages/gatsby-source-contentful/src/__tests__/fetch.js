@@ -80,7 +80,6 @@ beforeAll(() => {
 const reporter = {
   info: jest.fn(),
   panic: jest.fn(),
-  info: jest.fn(),
 }
 
 beforeEach(() => {
