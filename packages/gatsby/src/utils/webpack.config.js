@@ -527,16 +527,13 @@ module.exports = async (
           },
           priority: 30,
           minChunks: 1,
-          reuseExistingChunk: true,
         },
         commons: {
-          // only bundle non-async modules
-          chunks: `initial`,
           name: `commons`,
           // if a chunk is used on all components we put it in commons (we need at least 2 components)
           minChunks: Math.max(componentsCount, 2),
           priority: 20,
-          reuseExistingChunk: true,
+          maxSize:
         },
         // If a chunk is used in at least 2 components we create a separate chunk
         shared: {
@@ -568,6 +565,7 @@ module.exports = async (
           enforce: true,
         },
       },
+      maxAsyncRequests: Infinity,
       maxInitialRequests: 25,
       minSize: 20000,
     }
