@@ -203,6 +203,7 @@ module.exports = async function build(program: IBuildArgs): Promise<void> {
       pagePaths,
       activity: buildHTMLActivityProgress,
       workerPool,
+      store,
     })
   } catch (err) {
     let id = `95313` // TODO: verify error IDs exist
@@ -251,6 +252,8 @@ module.exports = async function build(program: IBuildArgs): Promise<void> {
     parentSpan: buildSpan,
   })
   postBuildActivityTimer.end()
+
+  await waitUntilAllJobsComplete()
 
   // Make sure we saved the latest state so we have all jobs cached
   await db.saveState()
