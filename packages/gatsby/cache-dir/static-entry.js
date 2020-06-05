@@ -47,7 +47,7 @@ Html = Html && Html.__esModule ? Html.default : Html
 const getPageData = pageDataPath => {
   const absolutePageDataPath = nodePath.resolve(`public/${pageDataPath}`)
   try {
-    return JSON.parse(fs.readFileSync(absolutePageDataPath).toString())
+    return JSON.parse(fs.readFileSync(absolutePageDataPath, `utf8`))
   } catch (err) {
     return {}
   }
@@ -351,7 +351,7 @@ export default ({ pagePath, pageDataPath, appDataPath }, callback) => {
             key={style.name}
             data-href={`${__PATH_PREFIX__}/${style.name}`}
             dangerouslySetInnerHTML={{
-              __html: require(`../public/${style.name}`),
+              __html: fs.readFileSync(`public/${style.name}`, `utf8`),
             }}
           />
         )

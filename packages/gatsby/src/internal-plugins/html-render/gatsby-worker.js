@@ -14,7 +14,7 @@ exports.RENDER_HTML = ({ inputPaths, outputDir, args }) => {
     try {
       htmlComponentRenderer.default(
         {
-          page,
+          pagePath: page,
           pageDataPath,
           appDataPath,
         },

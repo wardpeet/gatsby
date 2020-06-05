@@ -73,7 +73,8 @@ const renderHTMLQueue = async (
   activity: IActivity,
   htmlComponentRendererPath: string,
   pages: string[],
-  store: any
+  store: any,
+  siteRoot: string
 ): Promise<void> => {
   // We need to only pass env vars that are set programmatically in gatsby-cli
   // to child process. Other vars will be picked up from environment.
@@ -84,19 +85,40 @@ const renderHTMLQueue = async (
     [`gatsby_canary_version`, `distributed-builds`],
   ]
 
+  const webpackStats = require(`${siteRoot}/public/webpack.stats.json`)
+  const pagesState = store.getState().pages
+  console.log(pagesState)
+
+  // we have to add all stlesheets as files so we can read them inside our rendering phase to enable critical css.
+  const stylesheets = []
+  webpackStats.assetsByChunkName.app.forEach(resource => {
+    if (resource.endsWith(`css`)) {
+      stylesheets.push(path.resolve(path.join(`public`, resource)))
+    }
+  })
+
   const pagePromises = pages.map(page => {
     const pageDataPath = page === `/` ? `index` : page
+
+    webpackStats.assetsByChunkName[
+      pagesState.get(page).componentChunkName
+    ].forEach(resource => {
+      if (resource.endsWith(`css`)) {
+        stylesheets.push(path.resolve(path.join(`public`, resource)))
+      }
+    })
 
     return createJobV2(
       {
         name: `RENDER_HTML`,
-        // TODO ADD ALL PAGE-DATA JSON files so support lifecycle
+        // TODO ADD ALL PAGE-DATA JSON files to support lifecycle
         inputPaths: [
           htmlComponentRendererPath,
           path.resolve(
             path.join(`public/page-data/`, pageDataPath, `page-data.json`)
           ),
           path.resolve(`public/page-data/app-data.json`),
+          ...stylesheets,
         ],
         outputDir: path.join(process.cwd(), `public`),
         args: {
@@ -145,14 +167,15 @@ const doBuildPages = async (
   rendererPath: string,
   pagePaths: string[],
   activity: IActivity,
-  store: any
+  store: any,
+  siteRoot: string
 ): Promise<void> => {
   telemetry.addSiteMeasurement(`BUILD_END`, {
     pagesCount: pagePaths.length,
   })
 
   try {
-    await renderHTMLQueue(activity, rendererPath, pagePaths, store)
+    await renderHTMLQueue(activity, rendererPath, pagePaths, store, siteRoot)
   } catch (error) {
     const prettyError = await createErrorFromString(
       error.stack,
@@ -178,6 +201,12 @@ export const buildHTML = async ({
   store: any
 }): Promise<void> => {
   const rendererPath = await buildRenderer(program, stage, activity.span)
-  await doBuildPages(rendererPath, pagePaths, activity, store)
+  await doBuildPages(
+    rendererPath,
+    pagePaths,
+    activity,
+    store,
+    program.directory
+  )
   await deleteRenderer(rendererPath)
 }
