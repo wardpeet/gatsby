@@ -87,7 +87,6 @@ const renderHTMLQueue = async (
 
   const webpackStats = require(`${siteRoot}/public/webpack.stats.json`)
   const pagesState = store.getState().pages
-  console.log(pagesState)
 
   // we have to add all stlesheets as files so we can read them inside our rendering phase to enable critical css.
   const stylesheets = []
