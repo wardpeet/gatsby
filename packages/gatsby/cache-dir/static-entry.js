@@ -1,6 +1,5 @@
 const React = require(`react`)
-const fs = require(`fs`)
-const nodePath = require(`path`)
+const path = require(`path`)
 const { renderToString, renderToStaticMarkup } = require(`react-dom/server`)
 const { ServerLocation, Router, isRedirect } = require(`@reach/router`)
 const {
@@ -44,23 +43,14 @@ try {
 
 Html = Html && Html.__esModule ? Html.default : Html
 
-const getPageData = pageDataPath => {
-  const absolutePageDataPath = nodePath.resolve(`public/${pageDataPath}`)
-  try {
-    return JSON.parse(fs.readFileSync(absolutePageDataPath, `utf8`))
-  } catch (err) {
-    return {}
-  }
+const getPageDataPathChunks = path => {
+  const fixedPagePath = path === `/` ? `index` : path
+  return [`page-data`, fixedPagePath, `page-data.json`]
 }
 
-const loadPageDataSync = pagePath => {
-  const pageDataPath = page === `/` ? `index` : page
-  try {
-    return getPageData(path.join(`page-data`, pageDataPath, `page-data.json`))
-  } catch (error) {
-    // not an error if file is not found. There's just no page data
-    return null
-  }
+const getPageDataUrl = pagePath => {
+  const pageDataPath = getPageDataPathChunks(pagePath)
+  return `${__PATH_PREFIX__}/${path.posix.join(...pageDataPath)}`
 }
 
 const createElement = React.createElement
@@ -91,7 +81,7 @@ const ensureArray = components => {
   }
 }
 
-export default ({ pagePath, pageDataPath, appDataPath }, callback) => {
+export default ({ pagePath, appDataPath, readFile }, callback) => {
   let bodyHtml = ``
   let headComponents = [
     <meta
@@ -154,8 +144,21 @@ export default ({ pagePath, pageDataPath, appDataPath }, callback) => {
     postBodyComponents = sanitizeComponents(components)
   }
 
-  const pageData = getPageData(pageDataPath)
-  const pageDataUrl = `${__PATH_PREFIX__}/${pageDataPath}`
+  const getPageData = pagePath => {
+    const pageDataPath = getPageDataPathChunks(pagePath)
+    const pageDataRaw = readFile(path.join(`public`, ...pageDataPath))
+
+    try {
+      return JSON.parse(pageDataRaw.toString())
+    } catch (err) {
+      return null
+    }
+  }
+
+  const loadPageDataSync = pagePath => getPageData(pagePath)
+
+  const pageData = getPageData(pagePath)
+  const pageDataUrl = getPageDataUrl(pagePath)
   const appDataUrl = `${__PATH_PREFIX__}/${appDataPath}`
   const { componentChunkName } = pageData
 
@@ -348,10 +351,9 @@ export default ({ pagePath, pageDataPath, appDataPath }, callback) => {
       } else {
         headComponents.unshift(
           <style
-            key={style.name}
             data-href={`${__PATH_PREFIX__}/${style.name}`}
             dangerouslySetInnerHTML={{
-              __html: fs.readFileSync(`public/${style.name}`, `utf8`),
+              __html: readFile(path.join(`public`, style.name), `utf-8`),
             }}
           />
         )

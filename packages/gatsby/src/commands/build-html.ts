@@ -98,6 +98,11 @@ const renderHTMLQueue = async (
 
   const pagePromises = pages.map(page => {
     const pageDataPath = page === `/` ? `index` : page
+    const pageDataURL = path.posix.join(
+      `page-data/`,
+      pageDataPath,
+      `/page-data.json`
+    )
 
     webpackStats.assetsByChunkName[
       pagesState.get(page).componentChunkName
@@ -113,21 +118,15 @@ const renderHTMLQueue = async (
         // TODO ADD ALL PAGE-DATA JSON files to support lifecycle
         inputPaths: [
           htmlComponentRendererPath,
-          path.resolve(
-            path.join(`public/page-data/`, pageDataPath, `page-data.json`)
-          ),
+          path.resolve(path.join(`public/`, pageDataURL)),
           path.resolve(`public/page-data/app-data.json`),
           ...stylesheets,
         ],
         outputDir: path.join(process.cwd(), `public`),
         args: {
-          page,
-          pageDataPath: path.posix.join(
-            `page-data/`,
-            pageDataPath,
-            `/page-data.json`
-          ),
+          pagePath: page,
           envVars,
+          root: siteRoot,
         },
       },
       {

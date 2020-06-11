@@ -1,35 +1,50 @@
+"use strict"
+
 const fs = require(`fs-extra`)
+const slash = require(`gatsby-core-utils`)
+
 const { getPageHtmlFilePath } = require(`../../utils/page-html`)
 
 exports.RENDER_HTML = ({ inputPaths, outputDir, args }) => {
-  const { envVars, page, pageDataPath } = args
-  const htmlComponentRenderer = require(inputPaths[0].path)
-  const appDataPath = `page-data/app-data.json`
+  const { pagePath } = args
 
-  // This is being executed in child process, so we need to set some vars
-  // for modules that aren't bundled by webpack.
-  envVars.forEach(([key, value]) => (process.env[key] = value))
+  const readFile = filePath => {
+    const inputPath = inputPaths.find(({ path }) =>
+      path.endsWith(slash(filePath))
+    )
+
+    return fs.readFileSync(inputPath.path, `utf8`)
+  }
+
+  let htmlRendererPath
+  inputPaths.forEach(({ path: filePath }) => {
+    if (filePath.endsWith(`render-page.js`)) {
+      htmlRendererPath = filePath
+    }
+  })
+  const htmlComponentRenderer = require(htmlRendererPath)
+  const appDataPath = `page-data/app-data.json`
 
   return new Promise((resolve, reject) => {
     try {
       htmlComponentRenderer.default(
         {
-          pagePath: page,
-          pageDataPath,
+          pagePath,
           appDataPath,
+          readFile,
         },
         (_throwAway, htmlString) => {
           resolve(
-            fs.outputFile(getPageHtmlFilePath(outputDir, page), htmlString)
+            fs.outputFile(getPageHtmlFilePath(outputDir, pagePath), htmlString)
           )
         }
       )
     } catch (e) {
       e.context = {
-        path: page,
+        path: pagePath,
       }
-
       reject(e)
     }
   })
 }
+// # sourceMappingURL=gatsby-worker.js.map
