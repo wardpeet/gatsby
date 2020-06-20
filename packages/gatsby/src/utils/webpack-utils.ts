@@ -1,3 +1,4 @@
+import * as path from "path"
 import { Loader, RuleSetRule, Plugin } from "webpack"
 import { GraphQLSchema } from "graphql"
 import postcss from "postcss"
@@ -407,6 +408,7 @@ export const createWebpackUtils = (
           `|`
         )})[\\\\/]`
       )
+
       return {
         test: /\.(js|mjs)$/,
         exclude: (modulePath: string): boolean => {
@@ -419,13 +421,8 @@ export const createWebpackUtils = (
             ) {
               return true
             }
-            // If dep is known library that doesn't need polyfilling, we don't.
-            // TODO this needs rework, this is buggy as hell
-            if (
-              /node_modules[\\/](@babel[\\/]runtime|core-js|react|react-dom|scheduler|prop-types)[\\/]/.test(
-                modulePath
-              )
-            ) {
+
+            if (doNotPolyfillRegex.test(modulePath)) {
               return true
             }
 
