@@ -27,11 +27,16 @@ export const onRenderBody = (
   { setHeadComponents, setPostBodyComponents },
   pluginOptions
 ) => {
-  if (process.env.NODE_ENV !== `production` || !pluginOptions.trackingId) {
+  if (
+    (process.env.NODE_ENV !== `test` &&
+      process.env.NODE_ENV !== `production`) ||
+    !pluginOptions.trackingId
+  ) {
     return null
   }
 
   // Lighthouse recommends pre-connecting to google analytics
+  // We do dns-prefetch/preconnect separately because of a safari bug https://bugs.webkit.org/show_bug.cgi?id=197010
   setHeadComponents([
     <link
       rel="preconnect"
@@ -44,6 +49,24 @@ export const onRenderBody = (
       href="https://www.google-analytics.com"
     />,
   ])
+
+  const scriptComponent = (
+    <script
+      key="gatsby-plugin-google-analytics-script"
+      src="https://www.google-analytics.com/analytics.js"
+      async
+    />
+  )
+
+  if (pluginOptions.head) {
+    setHeadComponents([scriptComponent])
+  } else {
+    setPostBodyComponents([scriptComponent])
+  }
+
+  if (process.env.NODE_ENV !== `production` || !pluginOptions.trackingId) {
+    return null
+  }
 
   const excludeGAPaths = []
   if (typeof pluginOptions.exclude !== `undefined`) {
@@ -62,7 +85,7 @@ export const onRenderBody = (
   }
 
   const setComponents = pluginOptions.head
-    ? setHeadComponents
+    ? seetHeadComponents
     : setPostBodyComponents
   return setComponents([
     <script

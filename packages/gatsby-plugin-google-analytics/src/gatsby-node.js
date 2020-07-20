@@ -3,5 +3,7 @@ exports.onPreInit = ({ reporter }, options) => {
     reporter.warn(
       `The Google Analytics plugin requires a tracking ID. Did you mean to add it?`
     )
+
+    if (Array.isArray(options.exclude))
   }
 }
