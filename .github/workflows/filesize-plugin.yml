@@ -9,4 +9,4 @@ jobs:
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
           build-script: "noop"
-          pattern: "./gatsby-link/src/**/*.{js,css,html,json}"
+          pattern: "./packages/gatsby-link/src/**/*.{js,css,html,json}"
