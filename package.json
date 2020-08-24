@@ -140,6 +140,7 @@
     "lint:scripts": "sh scripts/lint-shell-scripts.sh",
     "lint:other": "npm run prettier -- --check",
     "markdown": "md-magic --path \"starters/**/*.md\"",
+    "noop": "echo \"do nothing\"",
     "postmarkdown": "prettier --write \"starters/**/*.md\"",
     "plop": "plop",
     "prebootstrap": "yarn",
