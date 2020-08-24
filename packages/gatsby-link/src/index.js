@@ -24,6 +24,10 @@ export function withPrefix(path, prefix = getGlobalBasePrefix()) {
   }`
 }
 
+const x = {
+  y: `value`,
+}
+
 // These global values are wrapped in typeof clauses to ensure the values exist.
 // This is especially problematic in unit testing of this component.
 const getGlobalPathPrefix = () =>
