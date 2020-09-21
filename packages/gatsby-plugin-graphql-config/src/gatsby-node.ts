@@ -1,10 +1,13 @@
 import * as fs from "fs-extra"
 import { resolve, join } from "path"
 import { GraphQLSchema, printSchema } from "gatsby/graphql"
+import type { GatsbyNode, NodePluginArgs } from "gatsby"
 import type { GatsbyReduxStore } from "gatsby/src/redux"
-import type { IStateProgram } from "gatsby/src/internal"
 
-async function cacheGraphQLConfig(program: IStateProgram): Promise<void> {
+async function cacheGraphQLConfig(
+  program: ReturnType<GatsbyReduxStore["getState"]>["program"],
+  reporter: NodePluginArgs["reporter"]
+): Promise<void> {
   try {
     const base = program.directory
     const configJSONString = JSON.stringify(
@@ -32,21 +35,24 @@ async function cacheGraphQLConfig(program: IStateProgram): Promise<void> {
       resolve(base, `.cache`, `graphql.config.json`),
       configJSONString
     )
-    console.log(`[gatsby-plugin-graphql-config] wrote config file to .cache`)
+    reporter.info(`[gatsby-plugin-graphql-config] wrote config file to .cache`)
   } catch (err) {
-    console.error(
-      `[gatsby-plugin-graphql-config] failed to write config file to .cache`
+    reporter.panic(
+      `[gatsby-plugin-graphql-config] failed to write config file to .cache`,
+      err
     )
-    console.error(err)
   }
 }
 
 const createFragmentCacheHandler = (
   cacheDirectory: string,
-  store: GatsbyReduxStore
+  store: NodePluginArgs["store"],
+  reporter: NodePluginArgs["reporter"]
 ) => async (): Promise<void> => {
   try {
-    const currentDefinitions = store.getState().definitions
+    const currentDefinitions = (store.getState() as ReturnType<
+      GatsbyReduxStore["getState"]
+    >).definitions
 
     const fragmentString = Array.from(currentDefinitions.entries())
       .filter(([_, def]) => def.isFragment)
@@ -58,65 +64,72 @@ const createFragmentCacheHandler = (
       fragmentString
     )
 
-    console.log(`[gatsby-plugin-graphql-config] wrote fragments file to .cache`)
-  } catch (err) {
-    console.error(
-      `[gatsby-plugin-graphql-config] failed writing fragments file to .cache`
+    reporter.info(
+      `[gatsby-plugin-graphql-config] wrote fragments file to .cache`
     )
-    console.error(err)
+  } catch (err) {
+    reporter.panic(
+      `[gatsby-plugin-graphql-config] failed writing fragments file to .cache`,
+      err
+    )
   }
 }
 
 const cacheSchema = async (
   cacheDirectory: string,
-  schema: GraphQLSchema
+  schema: GraphQLSchema,
+  reporter: NodePluginArgs["reporter"]
 ): Promise<void> => {
   try {
-    console.log(`printing schema`)
+    reporter.verbose(`[gatsby-plugin-graphql-config] printing schema`)
     const schemaSDLString = printSchema(schema, { commentDescriptions: true })
 
     await fs.writeFile(join(cacheDirectory, `schema.graphql`), schemaSDLString)
 
-    console.log(`[gatsby-plugin-graphql-config] wrote SDL file to .cache`)
+    reporter.info(`[gatsby-plugin-graphql-config] wrote SDL file to .cache`)
   } catch (err) {
-    console.error(
-      `[gatsby-plugin-graphql-config] failed writing schema file to .cache`
+    reporter.error(
+      `[gatsby-plugin-graphql-config] failed writing schema file to .cache`,
+      err
     )
-    console.error(err)
   }
 }
 
 const createSchemaCacheHandler = (
   cacheDirectory: string,
-  store: GatsbyReduxStore
+  store: NodePluginArgs["store"],
+  reporter: NodePluginArgs["reporter"]
 ) => async (): Promise<void> => {
-  const { schema } = store.getState()
-  await cacheSchema(cacheDirectory, schema)
+  const { schema } = store.getState() as ReturnType<
+    GatsbyReduxStore["getState"]
+  >
+  await cacheSchema(cacheDirectory, schema, reporter)
 }
 
-export async function onPostBootstrap({
+export const onPostBootstrap: GatsbyNode["onPreBootstrap"] = async function onPostBootstrap({
   store,
   emitter,
-}: {
-  store: GatsbyReduxStore
-  emitter: any
+  reporter,
 }): Promise<void> {
-  const { program, schema } = store.getState()
+  const { program, schema } = store.getState() as ReturnType<
+    GatsbyReduxStore["getState"]
+  >
 
   const cacheDirectory = resolve(program.directory, `.cache`)
+  await fs.ensureDir(cacheDirectory)
 
-  if (!fs.existsSync(cacheDirectory)) {
-    return
-  }
   // cache initial schema
-  await cacheSchema(cacheDirectory, schema)
+  await cacheSchema(cacheDirectory, schema, reporter)
   // cache graphql config file
-  await cacheGraphQLConfig(program)
+  await cacheGraphQLConfig(program, reporter)
   // Important! emitter.on is an internal Gatsby API. It is highly discouraged to use in plugins and can break without a notice.
   // FIXME: replace it with a more appropriate API call when available.
   emitter.on(
     `SET_GRAPHQL_DEFINITIONS`,
-    createFragmentCacheHandler(cacheDirectory, store)
+    createFragmentCacheHandler(cacheDirectory, store, reporter)
   )
-  emitter.on(`SET_SCHEMA`, createSchemaCacheHandler(cacheDirectory, store))
+  emitter.on(
+    `SET_SCHEMA`,
+    createSchemaCacheHandler(cacheDirectory, store, reporter)
+  )
 }
