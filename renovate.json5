@@ -40,6 +40,7 @@
       schedule: "at any time",
       automerge: true,
       stabilityDays: 0,
+      prPriority: 50,
     },
     {
       groupName: "babel monorepo",
@@ -179,4 +180,7 @@
     },
   ],
   timezone: "GMT",
+  vulnerabilityAlerts: {
+    assignees: ["@wardpeet"],
+  },
 }
