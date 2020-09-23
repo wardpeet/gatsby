@@ -34,9 +34,9 @@
       schedule: "before 3am on Monday",
     },
     {
+      extends: ["monorepo:gatsby"],
       groupName: "starters and examples - Gatsby",
       paths: ["starters/**", "examples/**"],
-      packagePatterns: ["^gatsby-", "gatsby"],
       schedule: "at any time",
       automerge: true,
       stabilityDays: 0,
@@ -46,9 +46,13 @@
       sourceUrlPrefixes: ["https://github.com/babel/babel"],
     },
     {
-      groupName: "dev dependencies",
-      depTypeList: ["devDependencies"],
+      groupName: "mdx",
+      sourceUrlPrefixes: ["https://github.com/mdx-js/mdx"],
     },
+    //{
+    //  groupName: "dev dependencies",
+    //  depTypeList: ["devDependencies"],
+    //},
     // these rules define dependencies that we have special handling for
     {
       packageNames: ["gatsby-interface"],
@@ -91,7 +95,7 @@
     {
       // minor updates in packages <1.0.0 - need master issue approval
       // not grouped
-      groupName: "packages (<1.0.0 minor)",
+      // groupName: "packages (<1.0.0 minor)",
       paths: ["package.json", "packages/**"],
       dependencyDashboardApproval: true,
       updateTypes: ["minor"],
