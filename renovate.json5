@@ -34,17 +34,6 @@
       paths: ["package.json", "packages/**"],
     },
     {
-      groupName: "starters and examples - Gatsby",
-      paths: ["starters/**", "examples/**"],
-      packagePatterns: ["^gatsby-", "gatsby"],
-      automerge: true,
-    },
-    {
-      groupName: "starters and examples",
-      paths: ["starters/**", "examples/**"],
-      schedule: "before 3am on Monday",
-    },
-    {
       groupName: "dev dependencies",
       depTypeList: ["devDependencies"],
     },
@@ -160,6 +149,17 @@
     {
       depTypeList: ["engines"],
       enabled: false,
+    },
+    {
+      groupName: "starters and examples",
+      paths: ["starters/**", "examples/**"],
+      schedule: "before 3am on Monday",
+    },
+    {
+      groupName: "starters and examples - Gatsby",
+      paths: ["starters/**", "examples/**"],
+      packagePatterns: ["^gatsby-", "gatsby"],
+      automerge: true,
     },
     {
       groupName: "babel monorepo",
