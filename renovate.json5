@@ -57,7 +57,7 @@
       packageNames: ["gatsby-interface"],
       sourceUrlPrefixes: ["https://github.com/gatsbyjs/gatsby"],
       // update internal packages immediately after publish instead of waiting 3 days
-      stabilityDays: 0,
+      stabilityDays: 1,
     },
     {
       updateTypes: ["minor"],
