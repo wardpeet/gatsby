@@ -12,7 +12,7 @@
     ":disableRateLimiting",
     ":label(maintenance)",
     ":ignoreModulesAndTests",
-    "schedule:weekdays",
+    // "schedule:weekdays",
   ],
   includePaths: ["package.json", "packages/**", "starters/**", "examples/**"],
   major: {
