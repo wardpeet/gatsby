@@ -27,6 +27,8 @@
   // Wait for 3 days to update a package so we can check if it's stable
   stabilityDays: 3,
   postUpdateOptions: ["yarnDedupeHighest"],
+  timezone: "GMT",
+  schedule: "at any time",
   packageRules: [
     {
       groupName: "starters and examples",
@@ -37,7 +39,6 @@
       extends: ["monorepo:gatsby"],
       groupName: "starters and examples - Gatsby",
       paths: ["starters/**", "examples/**"],
-      schedule: "at any time",
       automerge: true,
       stabilityDays: 0,
       prPriority: 50,
@@ -179,7 +180,6 @@
       dependencyDashboardApproval: true,
     },
   ],
-  timezone: "GMT",
   vulnerabilityAlerts: {
     assignees: ["@wardpeet"],
   },
