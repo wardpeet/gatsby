@@ -159,7 +159,9 @@
       groupName: "starters and examples - Gatsby",
       paths: ["starters/**", "examples/**"],
       packagePatterns: ["^gatsby-", "gatsby"],
+      schedule: "at any time",
       automerge: true,
+      stabilityDays: 0,
     },
     {
       groupName: "babel monorepo",
