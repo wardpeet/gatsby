@@ -35,7 +35,7 @@
     },
     {
       groupName: "starters and examples - Gatsby",
-      extends: ["starters and examples"],
+      paths: ["starters/**", "examples/**"],
       packagePatterns: ["^gatsby-", "gatsby"],
       schedule: "at any time",
       automerge: true,
