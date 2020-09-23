@@ -48,6 +48,7 @@
     {
       groupName: "mdx",
       sourceUrlPrefixes: ["https://github.com/mdx-js/mdx"],
+      updateTypes: ["major", "minor", "patch"],
     },
     //{
     //  groupName: "dev dependencies",
