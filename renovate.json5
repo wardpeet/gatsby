@@ -10,17 +10,11 @@
     ":disablePeerDependencies",
     ":maintainLockFilesDisabled",
     ":disableRateLimiting",
+    ":label(maintenance)",
+    ":ignoreModulesAndTests",
+    "schedule:weekdays",
   ],
   includePaths: ["package.json", "packages/**", "starters/**", "examples/**"],
-  ignorePaths: [
-    "**/node_modules/**",
-    "**/bower_components/**",
-    "**/vendor/**",
-    "**/__tests__/**",
-    "**/test/**",
-    "**/tests/**",
-    "**/__fixtures__/**",
-  ],
   major: {
     dependencyDashboardApproval: true,
   },
@@ -32,6 +26,7 @@
   prHourlyLimit: 0,
   // Wait for 3 days to update a package so we can check if it's stable
   stabilityDays: 3,
+  postUpdateOptions: ["yarnDedupeHighest"],
   packageRules: [
     // these rules define group names
     {
@@ -39,12 +34,19 @@
       paths: ["package.json", "packages/**"],
     },
     {
+      groupName: "starters and examples - Gatsby",
+      paths: ["starters/**", "examples/**"],
+      packagePatterns: ["^gatsby-", "gatsby"],
+      automerge: true,
+    },
+    {
       groupName: "starters and examples",
       paths: ["starters/**", "examples/**"],
+      schedule: "before 3am on Monday",
     },
     {
       groupName: "babel monorepo",
-      sourceUrlPrefixes: "https://github.com/babel/babel",
+      sourceUrlPrefixes: ["https://github.com/babel/babel"],
     },
     {
       groupName: "dev dependencies",
@@ -171,5 +173,4 @@
     },
   ],
   timezone: "GMT",
-  schedule: "after 10am on Monday",
 }
