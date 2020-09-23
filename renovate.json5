@@ -46,6 +46,10 @@
       sourceUrlPrefixes: ["https://github.com/babel/babel"],
     },
     {
+      groupName: "lodash monorepo",
+      sourceUrlPrefixes: ["https://github.com/lodash/"],
+    },
+    {
       groupName: "mdx",
       sourceUrlPrefixes: ["https://github.com/mdx-js/mdx"],
       updateTypes: ["major", "minor", "patch"],
