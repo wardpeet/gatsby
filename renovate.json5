@@ -45,10 +45,6 @@
       schedule: "before 3am on Monday",
     },
     {
-      groupName: "babel monorepo",
-      sourceUrlPrefixes: ["https://github.com/babel/babel"],
-    },
-    {
       groupName: "dev dependencies",
       depTypeList: ["devDependencies"],
     },
@@ -164,6 +160,10 @@
     {
       depTypeList: ["engines"],
       enabled: false,
+    },
+    {
+      groupName: "babel monorepo",
+      sourceUrlPrefixes: ["https://github.com/babel/babel"],
     },
     {
       groupName: "types",
