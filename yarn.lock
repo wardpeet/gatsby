@@ -40,7 +40,7 @@
     asciidoctor-opal-runtime "0.3.0"
     unxhr "1.0.1"
 
-"@babel/cli@^7.11.6":
+"@babel/cli@^7.10.3", "@babel/cli@^7.11.6":
   version "7.11.6"
   resolved "https://registry.yarnpkg.com/@babel/cli/-/cli-7.11.6.tgz#1fcbe61c2a6900c3539c06ee58901141f3558482"
   integrity sha512-+w7BZCvkewSmaRM6H4L2QM3RL90teqEIHDIFXAmrW33+0jhlymnDAEdqVeCZATvxhQuio1ifoGVlJJbIiH9Ffg==
@@ -8018,10 +8018,10 @@ cssstyle@^2.0.0:
   dependencies:
     cssom "~0.3.6"
 
-csstype@2.6.10, csstype@^2.2.0, csstype@^2.5.7, csstype@^2.6.10, csstype@^2.6.9:
-  version "2.6.10"
-  resolved "https://registry.yarnpkg.com/csstype/-/csstype-2.6.10.tgz#e63af50e66d7c266edb6b32909cfd0aabe03928b"
-  integrity sha512-D34BqZU4cIlMCY93rZHbrq9pjTAQJ3U8S8rfBqjwHxkGPThWFjzZDQpgMJY0QViLxth6ZKYiwFBo14RdN44U/w==
+csstype@2.6.13, csstype@^2.2.0, csstype@^2.5.7, csstype@^2.6.13, csstype@^2.6.9:
+  version "2.6.13"
+  resolved "https://registry.yarnpkg.com/csstype/-/csstype-2.6.13.tgz#a6893015b90e84dd6e85d0e3b442a1e84f2dbe0f"
+  integrity sha512-ul26pfSQTZW8dcOnD2iiJssfXw0gdNVX9IJDH/X3K5DGPfj+fUYe3kB+swUY6BF3oZDxaID3AJt+9/ojSAE05A==
 
 csvtojson@^1.1:
   version "1.1.12"
