@@ -52,9 +52,13 @@
       sourceUrlPrefixes: ["https://github.com/lodash/"],
     },
     {
-      groupName: "mdx",
+      groupName: "mdx monorepo",
       sourceUrlPrefixes: ["https://github.com/mdx-js/mdx"],
       updateTypes: ["major", "minor", "patch"],
+    },
+    {
+      groupName: "Gatsby Core dependencies",
+      paths: ["packages/gatsby/package.json"],
     },
     //{
     //  groupName: "dev dependencies",
