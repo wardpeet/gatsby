@@ -51,13 +51,10 @@ const getTracedSVG = async ({ file, image, fieldArgs, cache, reporter }) =>
     reporter,
   })
 
-const fixedNodeType = ({
-  pathPrefix,
-  getNodeAndSavePathDependency,
-  reporter,
-  name,
-  cache,
-}) => {
+const fixedNodeType = (
+  { pathPrefix, getNodeAndSavePathDependency, reporter, name, cache },
+  pluginOptions
+) => {
   return {
     type: new GraphQLObjectType({
       name: name,
@@ -79,39 +76,41 @@ const fixedNodeType = ({
         srcSet: { type: new GraphQLNonNull(GraphQLString) },
         srcWebp: {
           type: GraphQLString,
-          resolve: ({ file, image, fieldArgs }) => {
-            // If the file is already in webp format or should explicitly
-            // be converted to webp, we do not create additional webp files
-            if (file.extension === `webp` || fieldArgs.toFormat === `webp`) {
-              return null
-            }
-            const args = { ...fieldArgs, pathPrefix, toFormat: `webp` }
-            return Promise.resolve(
-              fixed({
-                file,
-                args,
-                reporter,
-                cache,
-              })
-            ).then(({ src }) => src)
-          },
+          // resolve: ({ file, image, fieldArgs }) => {
+          //   // If the file is already in webp format or should explicitly
+          //   // be converted to webp, we do not create additional webp files
+          //   if (file.extension === `webp` || fieldArgs.toFormat === `webp`) {
+          //     return null
+          //   }
+
+          //   const args = { ...fieldArgs, pathPrefix, toFormat: `webp` }
+          //   return Promise.resolve(
+          //     fixed({
+          //       file,
+          //       args,
+          //       reporter,
+          //       cache,
+          //     })
+          //   ).then(({ src }) => src)
+          // },
         },
         srcSetWebp: {
           type: GraphQLString,
-          resolve: ({ file, image, fieldArgs }) => {
-            if (file.extension === `webp` || fieldArgs.toFormat === `webp`) {
-              return null
-            }
-            const args = { ...fieldArgs, pathPrefix, toFormat: `webp` }
-            return Promise.resolve(
-              fixed({
-                file,
-                args,
-                reporter,
-                cache,
-              })
-            ).then(({ srcSet }) => srcSet)
-          },
+          // resolve: ({ file, image, fieldArgs }) => {
+          //   if (file.extension === `webp` || fieldArgs.toFormat === `webp`) {
+          //     return null
+          //   }
+
+          //   const args = { ...fieldArgs, pathPrefix, toFormat: `webp` }
+          //   return Promise.resolve(
+          //     fixed({
+          //       file,
+          //       args,
+          //       reporter,
+          //       cache,
+          //     })
+          //   ).then(({ srcSet }) => srcSet)
+          // },
         },
         originalName: { type: GraphQLString },
       },
@@ -187,34 +186,60 @@ const fixedNodeType = ({
         defaultValue: false,
       },
     },
-    resolve: (image, fieldArgs, context) => {
+    resolve: async (image, fieldArgs, context) => {
       const file = getNodeAndSavePathDependency(image.parent, context.path)
       const args = { ...fieldArgs, pathPrefix }
-      return Promise.resolve(
-        fixed({
-          file,
-          args,
-          reporter,
-          cache,
-        })
-      ).then(o =>
-        Object.assign({}, o, {
-          fieldArgs: args,
-          image,
-          file,
-        })
-      )
+
+      if (
+        pluginOptions.skipProcesingOnDevelop &&
+        process.env.gatsby_executing_command === `develop`
+      ) {
+        const nodes = (await cache.get(`test`)) || []
+        nodes.push(image.id)
+        await cache.set(`test`, nodes)
+
+        return Promise.resolve(
+          queueImageResizing({
+            file,
+            args,
+            reporter,
+          })
+        ).then(o =>
+          Object.assign({}, o, {
+            fieldArgs: args,
+            image,
+            file,
+            srcSet: ``,
+            srcWebP: ``,
+            srcSetWebp: ``,
+          })
+        )
+      } else {
+        return Promise.resolve(
+          fixed({
+            file,
+            args,
+            reporter,
+            cache,
+          })
+        ).then(o =>
+          Object.assign({}, o, {
+            fieldArgs: args,
+            image,
+            file,
+            srcWebp: ``,
+            srcSetWebp: ``,
+          })
+        )
+      }
     },
   }
 }
 
-const fluidNodeType = ({
-  pathPrefix,
-  getNodeAndSavePathDependency,
-  reporter,
-  name,
-  cache,
-}) => {
+const fluidNodeType = (
+  { pathPrefix, getNodeAndSavePathDependency, reporter, name, cache },
+  pluginOptions
+) => {
   return {
     type: new GraphQLObjectType({
       name: name,
@@ -234,37 +259,41 @@ const fluidNodeType = ({
         srcSet: { type: new GraphQLNonNull(GraphQLString) },
         srcWebp: {
           type: GraphQLString,
-          resolve: ({ file, image, fieldArgs }) => {
-            if (image.extension === `webp` || fieldArgs.toFormat === `webp`) {
-              return null
-            }
-            const args = { ...fieldArgs, pathPrefix, toFormat: `webp` }
-            return Promise.resolve(
-              fluid({
-                file,
-                args,
-                reporter,
-                cache,
-              })
-            ).then(({ src }) => src)
-          },
+          // resolve: ({ file, image, fieldArgs, rest }) => {
+          //   if (image.extension === `webp` || fieldArgs.toFormat === `webp`) {
+          //     return null
+          //   }
+          //   const args = { ...fieldArgs, pathPrefix, toFormat: `webp` }
+          //   console.log({ file, image, fieldArgs, rest })
+          //   return Promise.resolve(
+          //     fluid({
+          //       file,
+          //       args,
+          //       reporter,
+          //       cache,
+          //       disableProcessing: true,
+          //     })
+          //   ).then(({ src }) => src)
+          // },
         },
         srcSetWebp: {
           type: GraphQLString,
-          resolve: ({ file, image, fieldArgs }) => {
-            if (image.extension === `webp` || fieldArgs.toFormat === `webp`) {
-              return null
-            }
-            const args = { ...fieldArgs, pathPrefix, toFormat: `webp` }
-            return Promise.resolve(
-              fluid({
-                file,
-                args,
-                reporter,
-                cache,
-              })
-            ).then(({ srcSet }) => srcSet)
-          },
+          // resolve: ({ file, image, fieldArgs }) => {
+          //   if (image.extension === `webp` || fieldArgs.toFormat === `webp`) {
+          //     return null
+          //   }
+          //   const args = { ...fieldArgs, pathPrefix, toFormat: `webp` }
+          //   console.log(file)
+          //   return Promise.resolve(
+          //     fluid({
+          //       file,
+          //       args,
+          //       reporter,
+          //       cache,
+          //       disableProcessing: true,
+          //     })
+          //   ).then(({ srcSet }) => srcSet)
+          // },
         },
         sizes: { type: new GraphQLNonNull(GraphQLString) },
         originalImg: { type: GraphQLString },
@@ -353,23 +382,52 @@ const fluidNodeType = ({
         description: `A list of image widths to be generated. Example: [ 200, 340, 520, 890 ]`,
       },
     },
-    resolve: (image, fieldArgs, context) => {
+    resolve: async (image, fieldArgs, context) => {
       const file = getNodeAndSavePathDependency(image.parent, context.path)
       const args = { ...fieldArgs, pathPrefix }
-      return Promise.resolve(
-        fluid({
-          file,
-          args,
-          reporter,
-          cache,
-        })
-      ).then(o =>
-        Object.assign({}, o, {
-          fieldArgs: args,
-          image,
-          file,
-        })
-      )
+
+      if (
+        pluginOptions.skipProcesingOnDevelop &&
+        process.env.gatsby_executing_command === `develop`
+      ) {
+        const nodes = (await cache.get(`test`)) || []
+        nodes.push(image.id)
+        await cache.set(`test`, nodes)
+
+        return Promise.resolve(
+          queueImageResizing({
+            file,
+            args,
+            reporter,
+          })
+        ).then(o =>
+          Object.assign({}, o, {
+            fieldArgs: args,
+            image,
+            file,
+            sizes: ``,
+            srcSet: ``,
+            srcWebP: ``,
+            srcSetWebp: ``,
+          })
+        )
+      } else {
+        return Promise.resolve(
+          fluid({
+            file,
+            args,
+            reporter,
+            cache,
+          })
+        ).then(o =>
+          Object.assign({}, o, {
+            fieldArgs: args,
+            image,
+            file,
+            sizes: ``,
+          })
+        )
+      }
     },
   }
 }
@@ -380,12 +438,10 @@ const fluidNodeType = ({
  */
 const inProgressCopy = new Set()
 
-const createFields = ({
-  pathPrefix,
-  getNodeAndSavePathDependency,
-  reporter,
-  cache,
-}) => {
+const createFields = (
+  { pathPrefix, getNodeAndSavePathDependency, reporter, cache },
+  pluginOptions
+) => {
   const nodeOptions = {
     pathPrefix,
     getNodeAndSavePathDependency,
@@ -394,15 +450,27 @@ const createFields = ({
   }
 
   // TODO: Remove resolutionsNode and sizesNode for Gatsby v3
-  const fixedNode = fixedNodeType({ name: `ImageSharpFixed`, ...nodeOptions })
-  const resolutionsNode = fixedNodeType({
-    name: `ImageSharpResolutions`,
-    ...nodeOptions,
-  })
+  const fixedNode = fixedNodeType(
+    { name: `ImageSharpFixed`, ...nodeOptions },
+    pluginOptions
+  )
+  const resolutionsNode = fixedNodeType(
+    {
+      name: `ImageSharpResolutions`,
+      ...nodeOptions,
+    },
+    pluginOptions
+  )
   resolutionsNode.deprecationReason = `Resolutions was deprecated in Gatsby v2. It's been renamed to "fixed" https://example.com/write-docs-and-fix-this-example-link`
 
-  const fluidNode = fluidNodeType({ name: `ImageSharpFluid`, ...nodeOptions })
-  const sizesNode = fluidNodeType({ name: `ImageSharpSizes`, ...nodeOptions })
+  const fluidNode = fluidNodeType(
+    { name: `ImageSharpFluid`, ...nodeOptions },
+    pluginOptions
+  )
+  const sizesNode = fluidNodeType(
+    { name: `ImageSharpSizes`, ...nodeOptions },
+    pluginOptions
+  )
   sizesNode.deprecationReason = `Sizes was deprecated in Gatsby v2. It's been renamed to "fluid" https://example.com/write-docs-and-fix-this-example-link`
 
   return {
@@ -563,6 +631,7 @@ const createFields = ({
             const o = queueImageResizing({
               file,
               args,
+              reporter,
             })
             resolve(
               Object.assign({}, o, {
@@ -578,24 +647,30 @@ const createFields = ({
   }
 }
 
-module.exports = ({
-  actions,
-  schema,
-  pathPrefix,
-  getNodeAndSavePathDependency,
-  reporter,
-  cache,
-}) => {
+module.exports = (
+  {
+    actions,
+    schema,
+    pathPrefix,
+    getNodeAndSavePathDependency,
+    reporter,
+    cache,
+  },
+  pluginOptions
+) => {
   const { createTypes } = actions
 
   const imageSharpType = schema.buildObjectType({
     name: `ImageSharp`,
-    fields: createFields({
-      pathPrefix,
-      getNodeAndSavePathDependency,
-      reporter,
-      cache,
-    }),
+    fields: createFields(
+      {
+        pathPrefix,
+        getNodeAndSavePathDependency,
+        reporter,
+        cache,
+      },
+      pluginOptions
+    ),
     interfaces: [`Node`],
     extensions: {
       infer: true,
