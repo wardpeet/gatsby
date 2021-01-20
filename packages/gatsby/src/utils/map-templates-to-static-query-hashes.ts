@@ -2,22 +2,7 @@ import { uniqBy, List } from "lodash"
 import path from "path"
 import { slash } from "gatsby-core-utils"
 import { IGatsbyState } from "../redux/types"
-import { Stats } from "webpack"
-
-interface ICompilation {
-  modules: Array<IModule>
-}
-
-interface IReason extends Omit<Stats.Reason, "module"> {
-  module: IModule
-}
-
-interface IModule extends Omit<Stats.FnModules, "identifier" | "reasons"> {
-  hasReasons: () => boolean
-  resource?: string
-  identifier: () => string
-  reasons: Array<IReason>
-}
+import { Stats, Compilation, NormalModule } from "webpack"
 
 /* When we traverse upwards, we need to know where to stop. We'll call these terminal nodes.
  * `async-requires.js` is the entry point for every page, while `api-runner-browser-plugins.js`
@@ -45,7 +30,7 @@ const entryNodes = [
  */
 export default function mapTemplatesToStaticQueryHashes(
   reduxState: IGatsbyState,
-  compilation: ICompilation
+  compilation: Compilation
 ): Map<string, Array<number>> {
   /* The `staticQueryComponents` slice of state is useful because
    * it is a pre extracted collection of all static queries found in a Gatsby site.
@@ -69,7 +54,7 @@ export default function mapTemplatesToStaticQueryHashes(
    * a Set of strings, each an absolute path of a dependent
    * of this module
    */
-  function getDeps(mod: IModule): Set<string> {
+  function getDeps(mod: NormalModule): Set<string> {
     const staticQueryModuleComponentPath = mod.resource
     const result = new Set<string>()
     const seen = new Set<string>(
@@ -77,7 +62,7 @@ export default function mapTemplatesToStaticQueryHashes(
     )
 
     // This is the body of the recursively called function
-    function getDepsRec(m: IModule, seen: Set<string>): Set<string> {
+    function getDepsRec(m: NormalModule, seen: Set<string>): Set<string> {
       // Reasons in webpack are literally reasons of why this module was included in the tree
       const hasReasons = m.hasReasons()
 
@@ -93,7 +78,7 @@ export default function mapTemplatesToStaticQueryHashes(
 
       // These are non terminal dependents and hence modules that need
       // further upward traversal
-      const nonTerminalDependents: List<IModule> = m.reasons
+      const nonTerminalDependents: List<NormalModule> = m.reasons
         .filter(r => {
           const dependentModule = r.module
           const isTerminal = entryNodes.some(entryNode =>
@@ -136,8 +121,8 @@ export default function mapTemplatesToStaticQueryHashes(
     // componentPaths are slashed by gatsby-core-utils we undo it
     const nonSlashedPath = path.resolve(componentPath)
 
-    const staticQueryComponentModule = modules.find(
-      m => m.resource === nonSlashedPath
+    const staticQueryComponentModule: NormalModule = Array.from(modules).find(
+      m => (m as NormalModule)?.resource === nonSlashedPath
     )
     const dependants = staticQueryComponentModule
       ? getDeps(staticQueryComponentModule)
@@ -208,6 +193,6 @@ function mapComponentsToStaticQueryHashes(
   return map
 }
 
-function isGatsbyBrowser(m: IModule): boolean {
+function isGatsbyBrowser(m: NormalModule): boolean {
   return !!m?.resource?.includes(`gatsby-browser.js`)
 }

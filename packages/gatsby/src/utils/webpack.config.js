@@ -230,13 +230,11 @@ module.exports = async (
             plugins.eslintGraphqlSchemaReload(),
           ])
           .filter(Boolean)
+        configPlugins.push(plugins.extractText({ filename: `[name].css` }))
         if (process.env.GATSBY_EXPERIMENTAL_DEV_SSR) {
           // Don't use the default mini-css-extract-plugin setup as that
           // breaks hmr.
-          configPlugins.push(
-            plugins.extractText({ filename: `[name].css` }),
-            plugins.extractStats()
-          )
+          configPlugins.push(plugins.extractStats())
         }
         break
       case `build-javascript`: {
@@ -519,10 +517,6 @@ module.exports = async (
 
     resolveLoader: getResolveLoader(),
     resolve: getResolve(stage),
-
-    node: {
-      __filename: true,
-    },
   }
 
   if (stage === `build-javascript`) {
@@ -622,9 +616,7 @@ module.exports = async (
         name: `webpack-runtime`,
       },
       // use hashes instead of ids for module identifiers
-      // TODO update to deterministic in webpack 5 (hashed is deprecated)
-      // @see https://webpack.js.org/guides/caching/#module-identifiers
-      moduleIds: `hashed`,
+      moduleIds: `deterministic`,
       splitChunks,
       minimizer: [
         // TODO: maybe this option should be noMinimize?
