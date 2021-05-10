@@ -26,7 +26,7 @@ import stripPrefix from "./strip-prefix"
 import matchPaths from "$virtual/match-paths.json"
 
 function renderApp(renderer, App) {
-  renderer(<App />, document.getElementById(`___gatsby`), fucntion() {
+  renderer(<App />, document.getElementById(`___gatsby`), function () {
     apiRunner(`onInitialClientRender`)
   })
 }
@@ -198,7 +198,7 @@ apiRunnerAsync(`onClientEntry`).then(() => {
         renderApp(renderer, App)
       }, 0)
     } else {
-      var handler = function () {
+      const handler = function () {
         doc.removeEventListener(`DOMContentLoaded`, handler, false)
         window.removeEventListener(`load`, handler, false)
         renderApp(renderer, App)
