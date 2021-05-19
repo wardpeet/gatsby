@@ -627,11 +627,9 @@ module.exports = async (
         },
 
         // Bundle all css & lazy css into one stylesheet to make sure lazy components do not break
-        // TODO make an exception for css-modules
         styles: {
           test(module) {
-            return 
-            Module(module)
+            return !isCssModule(module)
           },
 
           name: `styles`,
