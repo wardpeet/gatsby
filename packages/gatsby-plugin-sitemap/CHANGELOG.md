@@ -3,6 +3,73 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [4.2.0-next.2](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@4.2.0-next.1...gatsby-plugin-sitemap@4.2.0-next.2) (2021-05-18)
+
+### Bug Fixes
+
+- **gatsby-plugin-sitemap:** Remove reporter.verbose calls ([#31448](https://github.com/gatsbyjs/gatsby/issues/31448)) ([c339f67](https://github.com/gatsbyjs/gatsby/commit/c339f67ba0fe4e79df2b33fe3f4d016d0f8e20ba))
+- **gatsby-plugin-sitemap:** Sitemap path bug ([#31184](https://github.com/gatsbyjs/gatsby/issues/31184)) ([d95b258](https://github.com/gatsbyjs/gatsby/commit/d95b258fcc3a8e9b8b1c6d7f121690a5d4f44bf6))
+
+# [4.2.0-next.1](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@4.2.0-next.0...gatsby-plugin-sitemap@4.2.0-next.1) (2021-05-12)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [4.2.0-next.0](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@4.1.0-next.1...gatsby-plugin-sitemap@4.2.0-next.0) (2021-05-06)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [4.1.0-next.1](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@4.1.0-next.0...gatsby-plugin-sitemap@4.1.0-next.1) (2021-05-01)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [4.1.0-next.0](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@4.0.0-next.1...gatsby-plugin-sitemap@4.1.0-next.0) (2021-04-23)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [4.0.0-next.1](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@4.0.0-next.0...gatsby-plugin-sitemap@4.0.0-next.1) (2021-04-22)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [4.0.0-next.0](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@3.4.0-next.0...gatsby-plugin-sitemap@4.0.0-next.0) (2021-04-19)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [3.4.0-next.0](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@3.3.0-next.1...gatsby-plugin-sitemap@3.4.0-next.0) (2021-04-09)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [3.3.0-next.1](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@3.3.0-next.0...gatsby-plugin-sitemap@3.3.0-next.1) (2021-04-07)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [3.3.0-next.0](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@3.2.0-next.0...gatsby-plugin-sitemap@3.3.0-next.0) (2021-03-25)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [3.2.0-next.0](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@3.1.0-next.1...gatsby-plugin-sitemap@3.2.0-next.0) (2021-03-11)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [3.1.0-next.1](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@3.1.0-next.0...gatsby-plugin-sitemap@3.1.0-next.1) (2021-02-26)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [3.1.0-next.0](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@3.0.0-next.0...gatsby-plugin-sitemap@3.1.0-next.0) (2021-02-26)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [3.0.0-next.0](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@2.13.0-next.0...gatsby-plugin-sitemap@3.0.0-next.0) (2021-02-05)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [2.13.0-next.0](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@2.12.0-next.0...gatsby-plugin-sitemap@2.13.0-next.0) (2021-01-28)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
+# [2.12.0-next.0](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@2.11.0-next.0...gatsby-plugin-sitemap@2.12.0-next.0) (2021-01-18)
+
+**Note:** Version bump only for package gatsby-plugin-sitemap
+
 # [2.11.0-next.0](https://github.com/gatsbyjs/gatsby/compare/gatsby-plugin-sitemap@2.10.0-next.0...gatsby-plugin-sitemap@2.11.0-next.0) (2020-12-29)
 
 **Note:** Version bump only for package gatsby-plugin-sitemap

@@ -1,7 +1,15 @@
 const axios = require(`axios`)
 const _ = require(`lodash`)
+const urlJoin = require(`url-join`)
 
-const { nodeFromData, downloadFile, isFileNode } = require(`./normalize`)
+const { setOptions, getOptions } = require(`./plugin-options`)
+
+const {
+  nodeFromData,
+  downloadFile,
+  isFileNode,
+  createNodeIdWithVersion,
+} = require(`./normalize`)
 const { handleReferences, handleWebhookUpdate } = require(`./utils`)
 
 const asyncPool = require(`tiny-async-pool`)
@@ -22,6 +30,10 @@ function gracefullyRethrow(activity, error) {
   }
 }
 
+exports.onPreBootstrap = (_, pluginOptions) => {
+  setOptions(pluginOptions)
+}
+
 exports.sourceNodes = async (
   {
     actions,
@@ -38,17 +50,23 @@ exports.sourceNodes = async (
   },
   pluginOptions
 ) => {
-  let {
+  const {
     baseUrl,
-    apiBase,
+    apiBase = `jsonapi`,
     basicAuth,
     filters,
     headers,
     params,
-    concurrentFileRequests,
-    disallowedLinkTypes,
-    skipFileDownloads,
-    fastBuilds,
+    concurrentFileRequests = 20,
+    disallowedLinkTypes = [`self`, `describedby`],
+    skipFileDownloads = false,
+    fastBuilds = false,
+    entityReferenceRevisions = [],
+    languageConfig = {
+      defaultLanguage: `und`,
+      enabledLanguages: [`und`],
+      translatableEntities: [],
+    },
   } = pluginOptions
   const { createNode, setPluginStatus, touchNode } = actions
 
@@ -71,7 +89,7 @@ exports.sourceNodes = async (
         return
       }
       if (action === `delete`) {
-        actions.deleteNode({ node: getNode(createNodeId(id)) })
+        actions.deleteNode(getNode(createNodeId(id)))
         reporter.log(`Deleted node: ${id}`)
         changesActivity.end()
         return
@@ -94,6 +112,7 @@ exports.sourceNodes = async (
             getNode,
             reporter,
             store,
+            languageConfig,
           },
           pluginOptions
         )
@@ -106,9 +125,8 @@ exports.sourceNodes = async (
     return
   }
 
-  fastBuilds = fastBuilds || false
   if (fastBuilds) {
-    let lastFetched =
+    const lastFetched =
       store.getState().status.plugins?.[`gatsby-source-drupal`]?.lastFetched ??
       0
 
@@ -122,7 +140,7 @@ exports.sourceNodes = async (
     try {
       // Hit fastbuilds endpoint with the lastFetched date.
       const data = await axios.get(
-        `${baseUrl}/gatsby-fastbuilds/sync/${lastFetched}`,
+        urlJoin(baseUrl, `gatsby-fastbuilds/sync/`, lastFetched.toString()),
         {
           auth: basicAuth,
           headers,
@@ -139,15 +157,29 @@ exports.sourceNodes = async (
         // Touch nodes so they are not garbage collected by Gatsby.
         getNodes().forEach(node => {
           if (node.internal.owner === `gatsby-source-drupal`) {
-            touchNode({ nodeId: node.id })
+            touchNode(node)
           }
         })
 
         // Process sync data from Drupal.
-        let nodesToSync = data.data.entities
+        const nodesToSync = data.data.entities
         for (const nodeSyncData of nodesToSync) {
           if (nodeSyncData.action === `delete`) {
-            actions.deleteNode({ node: getNode(createNodeId(nodeSyncData.id)) })
+            actions.deleteNode(
+              getNode(
+                createNodeId(
+                  createNodeIdWithVersion(
+                    nodeSyncData.id,
+                    nodeSyncData.type,
+                    getOptions().languageConfig
+                      ? nodeSyncData.attributes.langcode
+                      : `und`,
+                    nodeSyncData.attributes?.drupal_internal__revision_id,
+                    entityReferenceRevisions
+                  )
+                )
+              )
+            )
           } else {
             // The data could be a single Drupal entity or an array of Drupal
             // entities to update.
@@ -168,6 +200,7 @@ exports.sourceNodes = async (
                   getNode,
                   reporter,
                   store,
+                  languageConfig,
                 },
                 pluginOptions
               )
@@ -193,18 +226,6 @@ exports.sourceNodes = async (
     `Fetch all data from Drupal`
   )
 
-  // Default apiBase to `jsonapi`
-  apiBase = apiBase || `jsonapi`
-
-  // Default disallowedLinkTypes to self, describedby.
-  disallowedLinkTypes = disallowedLinkTypes || [`self`, `describedby`]
-
-  // Default concurrentFileRequests to `20`
-  concurrentFileRequests = concurrentFileRequests || 20
-
-  // Default skipFileDownloads to false.
-  skipFileDownloads = skipFileDownloads || false
-
   // Fetch articles.
   reporter.info(`Starting to fetch all data from Drupal`)
 
@@ -212,7 +233,7 @@ exports.sourceNodes = async (
 
   let allData
   try {
-    const data = await axios.get(`${baseUrl}/${apiBase}`, {
+    const data = await axios.get(urlJoin(baseUrl, apiBase), {
       auth: basicAuth,
       headers,
       params,
@@ -222,6 +243,12 @@ exports.sourceNodes = async (
         if (disallowedLinkTypes.includes(type)) return
         if (!url) return
         if (!type) return
+
+        // Lookup this type in our list of language alterable entities.
+        const isTranslatable = languageConfig.translatableEntities.some(
+          entityType => entityType === type
+        )
+
         const getNext = async (url, data = []) => {
           if (typeof url === `object`) {
             // url can be string or object containing href field
@@ -232,7 +259,17 @@ exports.sourceNodes = async (
             // See https://www.drupal.org/docs/8/modules/jsonapi/filtering
             if (typeof filters === `object`) {
               if (filters.hasOwnProperty(type)) {
-                url = url + `?${filters[type]}`
+                url = new URL(url)
+                const filterParams = new URLSearchParams(filters[type])
+                const filterKeys = Array.from(filterParams.keys())
+                filterKeys.forEach(filterKey => {
+                  // Only add filter params to url if it has not already been
+                  // added.
+                  if (!url.searchParams.has(filterKey)) {
+                    url.searchParams.set(filterKey, filterParams.get(filterKey))
+                  }
+                })
+                url = url.toString()
               }
             }
           }
@@ -269,7 +306,34 @@ exports.sourceNodes = async (
           return data
         }
 
-        const data = await getNext(url)
+        let data = []
+        if (isTranslatable === false) {
+          data = await getNext(url)
+        } else {
+          for (let i = 0; i < languageConfig.enabledLanguages.length; i++) {
+            let currentLanguage = languageConfig.enabledLanguages[i]
+            const urlPath = url.href.split(`${apiBase}/`).pop()
+            const baseUrlWithoutTrailingSlash = baseUrl.replace(/\/$/, ``)
+            // The default language's JSON API is at the root.
+            if (
+              currentLanguage === getOptions().languageConfig.defaultLanguage ||
+              baseUrlWithoutTrailingSlash.slice(-currentLanguage.length) ==
+                currentLanguage
+            ) {
+              currentLanguage = ``
+            }
+
+            const joinedUrl = urlJoin(
+              baseUrlWithoutTrailingSlash,
+              currentLanguage,
+              apiBase,
+              urlPath
+            )
+            const dataForLanguage = await getNext(joinedUrl)
+
+            data = data.concat(dataForLanguage)
+          }
+        }
 
         const result = {
           type,
@@ -294,7 +358,7 @@ exports.sourceNodes = async (
     if (!contentType) return
     _.each(contentType.data, datum => {
       if (!datum) return
-      const node = nodeFromData(datum, createNodeId)
+      const node = nodeFromData(datum, createNodeId, entityReferenceRevisions)
       nodes.set(node.id, node)
     })
   })
@@ -304,6 +368,7 @@ exports.sourceNodes = async (
     handleReferences(node, {
       getNode: nodes.get.bind(nodes),
       createNodeId,
+      entityReferenceRevisions,
     })
   })
 
@@ -385,7 +450,7 @@ exports.onCreateDevServer = (
           )
         }
         if (action === `delete`) {
-          actions.deleteNode({ node: getNode(createNodeId(id)) })
+          actions.deleteNode(getNode(createNodeId(id)))
           return reporter.log(`Deleted node: ${id}`)
         }
         const nodeToUpdate = JSON.parse(JSON.parse(req.body)).data
@@ -410,3 +475,37 @@ exports.onCreateDevServer = (
     }
   )
 }
+
+exports.pluginOptionsSchema = ({ Joi }) =>
+  Joi.object({
+    baseUrl: Joi.string()
+      .required()
+      .description(`The URL to root of your Drupal instance`),
+    apiBase: Joi.string().description(
+      `The path to the root of the JSONAPI — defaults to "jsonapi"`
+    ),
+    basicAuth: Joi.object({
+      username: Joi.string(),
+      password: Joi.string(),
+    }).description(`Enables basicAuth`),
+    filters: Joi.object().description(
+      `Pass filters to the JSON API for specific collections`
+    ),
+    headers: Joi.object().description(
+      `Set request headers for requests to the JSON API`
+    ),
+    params: Joi.object().description(`Append optional GET params to requests`),
+    concurrentFileRequests: Joi.number().integer().default(20).min(1),
+    disallowedLinkTypes: Joi.array().items(Joi.string()),
+    skipFileDownloads: Joi.boolean(),
+    fastBuilds: Joi.boolean(),
+    entityReferenceRevisions: Joi.array().items(Joi.string()),
+    secret: Joi.string().description(
+      `an optional secret token for added security shared between your Drupal instance and Gatsby preview`
+    ),
+    languageConfig: Joi.object({
+      defaultLanguage: Joi.string().required(),
+      enabledLanguages: Joi.array().items(Joi.string()).required(),
+      translatableEntities: Joi.array().items(Joi.string()).required(),
+    }),
+  })

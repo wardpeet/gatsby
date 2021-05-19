@@ -31,7 +31,7 @@ import "./src/index.scss"
 
 ## Other options
 
-If you need to pass options to Sass use the plugins options, see [node-sass](https://github.com/sass/node-sass)/[dart-sass](https://github.com/sass/dart-sass) docs
+If you need to pass options to Sass use the plugins options, see [`node-sass`](https://github.com/sass/node-sass)/[`dart-sass`](https://github.com/sass/dart-sass) docs
 for all available options.
 
 ```javascript:title=gatsby-config.js
@@ -48,8 +48,8 @@ plugins: [
 ]
 ```
 
-If you need to override the default options passed into [`css-loader`](https://github.com/webpack-contrib/css-loader/tree/version-1):
-**Note:** Gatsby is using `css-loader@1.0.1`.
+If you need to override the default options passed into [`css-loader`](https://github.com/webpack-contrib/css-loader).
+**Note:** Gatsby is using `css-loader@^5.0.0`.
 
 ```javascript:title=gatsby-config.js
 plugins: [
@@ -85,7 +85,7 @@ plugins: [
 
 ### Sass Precision
 
-Sass defaults to [10 digits of precision](https://github.com/sass/sass/pull/2297). If you want some other level of precision (e.g. if you use Bootstrap), you may configure it as follows:
+`sass` intentionally doesn't have support for setting a custom `precision`. `node-sass` defaults to [5 digits of precision](https://github.com/sass/node-sass#precision). If you want some other level of precision (e.g. if you use Bootstrap), you may configure it as follows:
 
 #### Bootstrap 4
 
@@ -96,6 +96,7 @@ plugins: [
   {
     resolve: `gatsby-plugin-sass`,
     options: {
+      implementation: require("node-sass"),
       postCssPlugins: [somePostCssPlugin()],
       sassOptions: {
         precision: 6,
@@ -114,6 +115,7 @@ plugins: [
   {
     resolve: `gatsby-plugin-sass`,
     options: {
+      implementation: require("node-sass"),
       postCssPlugins: [somePostCssPlugin()],
       sassOptions: {
         precision: 8,
@@ -125,10 +127,10 @@ plugins: [
 
 ### With CSS Modules
 
-Using CSS Modules requires no additional configuration. Simply prepend `.module` to the extension. For example: `App.scss` -> `App.module.scss`.
-Any file with the `module` extension will use CSS Modules.
+Using CSS Modules requires no additional configuration. Simply prepend `.module` to the extension. For example: `app.scss` -> `app.module.scss`.
+Any file with the `module` extension will use CSS Modules. CSS modules are imported as ES Modules to support treeshaking. You'll need to import styles as: `import { yourClassName, anotherClassName } from './app.module.scss'`
 
-## SASS & CSS Modules file Regexes
+## Sass & CSS Modules file Regexes
 
 To override the file regex for Sass or CSS modules,
 
@@ -137,7 +139,7 @@ plugins: [
   {
     resolve: `gatsby-plugin-sass`,
     options: {
-      // Override the file regex for SASS
+      // Override the file regex for Sass
       sassRuleTest: /\.global\.s(a|c)ss$/,
       // Override the file regex for CSS modules
       sassRuleModulesTest: /\.mod\.s(a|c)ss$/,
@@ -155,9 +157,9 @@ in the plugin options.
 
 ## Relative paths & `url()`
 
-This plugin resolves `url()` paths relative to the entry SCSS/Sass file not – as might be expected – the location relative to the declaration. Under the hood, it makes use of [sass-loader](https://github.com/webpack-contrib/sass-loader/blob/master/README.md#problems-with-url) and this is documented in the [readme](https://github.com/webpack-contrib/sass-loader/blob/master/README.md#problems-with-url).
+This plugin resolves `url()` paths relative to the entry SCSS/Sass file not – as might be expected – the location relative to the declaration. Under the hood, it makes use of [`sass-loader`](https://github.com/webpack-contrib/sass-loader/blob/master/README.md#problems-with-url) and this is documented in the [readme](https://github.com/webpack-contrib/sass-loader/blob/master/README.md#problems-with-url).
 
-Using [resolve-url-loader](https://github.com/bholloway/resolve-url-loader) provides a workaround, if you want to use relative url just install the plugin and then add it to your sass plugin options configuration.
+Using [`resolve-url-loader`](https://github.com/bholloway/resolve-url-loader) provides a workaround, if you want to use relative url just install the plugin and then add it to your Sass plugin options configuration.
 
 First:
 
@@ -178,7 +180,7 @@ plugins: [
 ]
 ```
 
-You can also configure resolve-url-plugin providing some options (see [plugin documentation](https://github.com/bholloway/resolve-url-loader) for all options):
+You can also configure `resolve-url-plugin` providing some options (see [plugin documentation](https://github.com/bholloway/resolve-url-loader) for all options):
 
 ```javascript:title=gatsby-config.js
 plugins: [
@@ -195,7 +197,7 @@ plugins: [
 ]
 ```
 
-**Please note:** Adding resolve-url-loader will use `sourceMap: true` on sass-loader (as it is required for the plugin to work), you can then activate/deactivate source-map for Sass files in the plugin:
+**Please note:** Adding `resolve-url-loader` will use `sourceMap: true` on `sass-loader` (as it is required for the plugin to work), you can then activate/deactivate source-map for Sass files in the plugin:
 
 ```javascript:title=gatsby-config.js
 plugins: [

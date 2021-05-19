@@ -1,6 +1,5 @@
 import systemPath from "path"
 import normalize from "normalize-path"
-import _ from "lodash"
 import {
   GraphQLList,
   GraphQLType,
@@ -28,6 +27,9 @@ import {
 import { IGatsbyNode } from "../redux/types"
 
 type ResolvedLink = IGatsbyNode | Array<IGatsbyNode> | null
+
+type nestedListOfStrings = Array<string | nestedListOfStrings>
+type nestedListOfNodes = Array<IGatsbyNode | nestedListOfNodes>
 
 export function findMany<TSource, TArgs>(
   typeName: string
@@ -86,10 +88,12 @@ export function findManyPaginated<TSource, TArgs, TNodeType>(
     // `distinct` which might need to be resolved.
     const group = getProjectedField(info, `group`)
     const distinct = getProjectedField(info, `distinct`)
+    const max = getProjectedField(info, `max`)
     const extendedArgs = {
       ...args,
       group: group || [],
       distinct: distinct || [],
+      max: max || [],
     }
 
     const result = await findMany<TSource, PaginatedArgs<TArgs>>(typeName)(
@@ -112,14 +116,97 @@ export const distinct: GatsbyResolver<
 > = function distinctResolver(source, args): Array<string> {
   const { field } = args
   const { edges } = source
-  const values = edges.reduce((acc, { node }) => {
+
+  const values = new Set<string>()
+  edges.forEach(({ node }) => {
     const value =
       getValueAt(node, `__gatsby_resolved.${field}`) || getValueAt(node, field)
-    return value != null
-      ? acc.concat(value instanceof Date ? value.toISOString() : value)
-      : acc
-  }, [])
-  return Array.from(new Set(values)).sort()
+    if (value === null || value === undefined) {
+      return
+    }
+    if (Array.isArray(value)) {
+      value.forEach(subValue =>
+        values.add(subValue instanceof Date ? subValue.toISOString() : subValue)
+      )
+    } else if (value instanceof Date) {
+      values.add(value.toISOString())
+    } else {
+      values.add(value)
+    }
+  })
+  return Array.from(values).sort()
+}
+
+export const min: GatsbyResolver<
+  IGatsbyConnection<any>,
+  IFieldConnectionArgs
+> = function minResolver(source, args): number | null {
+  const { field } = args
+  const { edges } = source
+
+  let min = Number.MAX_SAFE_INTEGER
+
+  edges.forEach(({ node }) => {
+    let value =
+      getValueAt(node, `__gatsby_resolved.${field}`) || getValueAt(node, field)
+
+    if (typeof value !== `number`) {
+      value = Number(value)
+    }
+    if (!isNaN(value) && value < min) {
+      min = value
+    }
+  })
+  if (min === Number.MAX_SAFE_INTEGER) {
+    return null
+  }
+  return min
+}
+
+export const max: GatsbyResolver<
+  IGatsbyConnection<any>,
+  IFieldConnectionArgs
+> = function maxResolver(source, args): number | null {
+  const { field } = args
+  const { edges } = source
+
+  let max = Number.MIN_SAFE_INTEGER
+
+  edges.forEach(({ node }) => {
+    let value =
+      getValueAt(node, `__gatsby_resolved.${field}`) || getValueAt(node, field)
+    if (typeof value !== `number`) {
+      value = Number(value)
+    }
+    if (!isNaN(value) && value > max) {
+      max = value
+    }
+  })
+  if (max === Number.MIN_SAFE_INTEGER) {
+    return null
+  }
+  return max
+}
+
+export const sum: GatsbyResolver<
+  IGatsbyConnection<any>,
+  IFieldConnectionArgs
+> = function sumResolver(source, args): number | null {
+  const { field } = args
+  const { edges } = source
+
+  return edges.reduce<number | null>((prev, { node }) => {
+    let value =
+      getValueAt(node, `__gatsby_resolved.${field}`) || getValueAt(node, field)
+
+    if (typeof value !== `number`) {
+      value = Number(value)
+    }
+    if (!isNaN(value)) {
+      return (prev || 0) + value
+    }
+    return prev
+  }, null)
 }
 
 type IGatsbyGroupReturnValue<NodeType> = Array<
@@ -353,15 +440,22 @@ export function fileByPath<TSource, TArgs>(
     args,
     context,
     info
-  ): Promise<any> {
+  ): Promise<IGatsbyNode | nestedListOfNodes | null> {
     const resolver = fieldConfig.resolve || context.defaultFieldResolver
-    const fieldValue = await resolver(source, args, context, {
-      ...info,
-      from: options.from || info.from,
-      fromNode: options.from ? options.fromNode : info.fromNode,
-    })
+    const fieldValue: nestedListOfStrings = await resolver(
+      source,
+      args,
+      context,
+      {
+        ...info,
+        from: options.from || info.from,
+        fromNode: options.from ? options.fromNode : info.fromNode,
+      }
+    )
 
-    if (fieldValue == null) return null
+    if (fieldValue == null) {
+      return null
+    }
 
     // Find the File node for this node (we assume the node is something
     // like markdown which would be a child node of a File node).
@@ -370,32 +464,38 @@ export function fileByPath<TSource, TArgs>(
       node => node.internal && node.internal.type === `File`
     )
 
-    const findLinkedFileNode = (relativePath: string): any => {
-      // Use the parent File node to create the absolute path to
-      // the linked file.
-      const fileLinkPath = normalize(
-        systemPath.resolve(parentFileNode.dir, relativePath)
-      )
-
-      // Use that path to find the linked File node.
-      const linkedFileNode = _.find(
-        context.nodeModel.getAllNodes({ type: `File` }),
-        n => n.absolutePath === fileLinkPath
-      )
-      return linkedFileNode
+    async function queryNodesByPath(
+      relPaths: nestedListOfStrings
+    ): Promise<nestedListOfNodes> {
+      const arr: nestedListOfNodes = []
+      for (let i = 0; i < relPaths.length; ++i) {
+        arr[i] = await (Array.isArray(relPaths[i])
+          ? queryNodesByPath(relPaths[i] as nestedListOfStrings)
+          : queryNodeByPath(relPaths[i] as string))
+      }
+      return arr
     }
 
-    return resolveValue(findLinkedFileNode, fieldValue)
-  }
-}
+    function queryNodeByPath(relPath: string): Promise<IGatsbyNode> {
+      return context.nodeModel.runQuery({
+        query: {
+          filter: {
+            absolutePath: {
+              eq: normalize(systemPath.resolve(parentFileNode.dir, relPath)),
+            },
+          },
+        },
+        firstOnly: true,
+        type: `File`,
+      })
+    }
 
-function resolveValue(
-  resolve: (a: any) => any,
-  value: any | Array<any>
-): any | Array<any> {
-  return Array.isArray(value)
-    ? value.map(v => resolveValue(resolve, v))
-    : resolve(value)
+    if (Array.isArray(fieldValue)) {
+      return queryNodesByPath(fieldValue)
+    } else {
+      return queryNodeByPath(fieldValue)
+    }
+  }
 }
 
 function getProjectedField(
@@ -551,13 +651,23 @@ export function wrappingResolver<TSource, TArgs>(
       )
       activity.start()
     }
-    try {
-      return resolver(parent, args, context, info)
-    } finally {
+    const result = resolver(parent, args, context, info)
+
+    if (!activity) {
+      return result
+    }
+
+    const endActivity = (): void => {
       if (activity) {
         activity.end()
       }
     }
+    if (typeof result?.then === `function`) {
+      result.then(endActivity, endActivity)
+    } else {
+      endActivity()
+    }
+    return result
   }
 }
 

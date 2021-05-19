@@ -46,7 +46,7 @@ sharp.concurrency(1)
  * @property {import('sharp').FitEnum} fit
  */
 
-/**+
+/** +
  * @typedef {Object} Transform
  * @property {string} outputPath
  * @property {TransformArgs} args
@@ -122,6 +122,10 @@ exports.processFile = (file, transforms, options = {}) => {
         .tiff({
           quality: transformArgs.quality,
           force: transformArgs.toFormat === `tiff`,
+        })
+        .avif({
+          quality: transformArgs.quality,
+          force: transformArgs.toFormat === `avif`,
         })
 
       // jpeg
