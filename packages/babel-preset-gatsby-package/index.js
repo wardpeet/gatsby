@@ -8,6 +8,13 @@ function preset(context, options = {}) {
 
   const browserConfig = {
     useBuiltIns: false,
+    exclude: [
+      `transform-typeof-symbol`,
+      `transform-spread`,
+      `proposal-nullish-coalescing-operator`,
+      `proposal-optional-chaining`,
+      `proposal-object-rest-spread`,
+    ],
   }
 
   if (browser) {
@@ -45,7 +52,9 @@ function preset(context, options = {}) {
           browser ? browserConfig : nodeConfig
         ),
       ],
-      [r(`@babel/preset-react`)],
+      [r(`@babel/preset-react`), {
+        useSpread: true
+      }],
       r(`@babel/preset-flow`),
     ],
     plugins: [
